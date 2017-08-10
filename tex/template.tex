@@ -1,0 +1,57 @@
+\documentclass[11pt,a4paper,openright,twoside]{report}
+
+\usepackage[pdftex]{graphicx}
+\usepackage[italian]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{setspace}
+
+\usepackage{fancyhdr}
+\usepackage{indentfirst}
+\usepackage{newlfont}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{latexsym}
+\usepackage{amsthm}
+
+\oddsidemargin=30pt \evensidemargin=20pt%impostano i margini
+\usepackage[htt]{hyphenat} %per andare a capo nei typescript
+\hyphenation{sil-la-ba-zio-ne pa-ren-te-si}%serve per la sillabazione: tra parentesi 
+
+\pagestyle{fancy}\addtolength{\headwidth}{20pt}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter.\ #1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection \ #1}{}}
+\rhead[\fancyplain{}{\bfseries\leftmark}]{\fancyplain{}{\bfseries\thepage}}
+\cfoot{}
+
+%\linespread{1.3}                     
+
+\begin{document}
+	
+	\include{frontespizio} 
+	\clearpage{\pagestyle{empty}\cleardoublepage}%non numera l'ultima pagina sinistra
+	
+	\pagenumbering{roman}                   %serve per mettere i numeri romani
+	\include{Abstract}
+	\addcontentsline{toc}{chapter}{Abstract}
+	\clearpage{\pagestyle{empty}\cleardoublepage}
+
+	\include{indice}                        
+	\clearpage{\pagestyle{empty}\cleardoublepage}
+	\pagenumbering{arabic}                  %mette i numeri arabi
+
+	\include{capitolo1}
+	\include{capitolo2}
+	\include{capitolo3}
+
+	\clearpage{\pagestyle{empty}\cleardoublepage}
+	\addcontentsline{toc}{chapter}{Bibliografia}
+	\bibliographystyle{plainurl}
+	\bibliography{bibl_tesi}
+
+	\clearpage{\pagestyle{empty}\cleardoublepage}	
+	\include{ringraziamenti}
+
+\end{document}
