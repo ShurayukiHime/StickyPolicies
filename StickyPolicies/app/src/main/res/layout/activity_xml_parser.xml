@@ -6,10 +6,23 @@
     android:layout_height="match_parent"
     tools:context="com.example.giada.stickypoliciesapp.XmlParserActivity">
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/start_parsing"
+        android:text="Parse Policy!"
+        android:layout_marginLeft="8dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="16dp" />
+
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/xml_text_view"
-        android:text="Default text."/>
+        android:layout_width="368dp"
+        android:layout_height="495dp"
+        android:id="@+id/xml_parsing_results"
+        android:text="Still not parsed anything."
+        tools:layout_editor_absoluteY="71dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
