@@ -1,0 +1,11 @@
+Questo lavoro di tesi si colloca nell’ambito della protezione dei dati personali all’interno di Internet con l’obiettivo di offrire strumenti più potenti per la loro gestione consapevole. Il prototipo di gestore di dati personali sviluppato comunica con servizi “consumatori” di dati mediante interfacce e monitora il flusso di dati in ingresso e in uscita tramite l’utilizzo di autorizzazioni revocabili, espresse liberamente ed in modo consapevole dall’utente finale.
+
+Il progetto MyData, dal quale si è preso spunto per il gestore di dati personali, costituisce un’architettura software fondata non solo sulla protezione della privacy ma anche sull’interoperabilità dei dati e dei servizi che li utilizzano. Essa realizza uno strato software di più basso livello, semplificando lo sviluppo dei servizi che ne fanno parte.
+
+All’interno del lavoro di tesi viene presentato un esempio di funzionamento del gestore di dati personali con un servizio di previsione del prossimo viaggio più probabile, che fornisce suggerimenti sugli spostamenti futuri in base alle informazioni raccolte da fonti come calendario e storico delle posizioni GPS. 
+
+privacy
+MyData
+infrastruttura
+modularità
+consenso

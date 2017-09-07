@@ -4,10 +4,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import com.facebook.FacebookSdk;
-import com.facebook.appevents.AppEventsLogger;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
         mSwitchToXmlParsingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d("MainActivity", "Xml button Clicked!");
                 Context context = MainActivity.this;
                 Class destinationActivity = XmlParserActivity.class;
                 Intent startXmlParser = new Intent(context, destinationActivity);
@@ -30,12 +30,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        setContentView(R.layout.activity_main);
-
         mConnectToFacebookButton = (Button) findViewById(R.id.connect_to_facebook);
         mConnectToFacebookButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d("MainActivity", "Facebook button Clicked!");
                 Context context = MainActivity.this;
                 Class destinationActivity = ConnectToFacebookActivity.class;
                 Intent connectToSocial = new Intent(context, destinationActivity);
