@@ -1,5 +1,6 @@
 package com.example.giada.stickypoliciesapp;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
@@ -34,7 +35,6 @@ import java.util.Arrays;
 public class ConnectToFacebookActivity extends AppCompatActivity {
     private LoginButton mFacebookLoginButton;
     private AccessToken accessToken;
-    private Button mInvalidateSessionButton;
     private CallbackManager callbackManager;
     private String TAG = "ConnectToFacebookActivi";
 
@@ -44,19 +44,14 @@ public class ConnectToFacebookActivity extends AppCompatActivity {
         setContentView(R.layout.activity_connect_to_facebook);
         Log.d(TAG, "Entered the activity");
 
-        mInvalidateSessionButton = (Button) findViewById(R.id.invalidate_session);
-        mInvalidateSessionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // https://graph.accountkit.com/v1.2/logout?access_token={user_access_token}
-                LoginManager.getInstance().logOut();
-            }
-        });
+        // https://graph.accountkit.com/v1.2/logout?access_token={user_access_token}
+        //LoginManager.getInstance().logOut();
+
 
         mFacebookLoginButton = (LoginButton) findViewById(R.id.login_button);
-        mFacebookLoginButton.setReadPermissions("email");
 
         callbackManager = CallbackManager.Factory.create();
+        mFacebookLoginButton.setReadPermissions("email");
         mFacebookLoginButton.setReadPermissions(Arrays.asList("user_photos"));
         mFacebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
 
@@ -64,28 +59,8 @@ public class ConnectToFacebookActivity extends AppCompatActivity {
             public void onSuccess(LoginResult loginResult) {
                 Toast.makeText(ConnectToFacebookActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
                 accessToken = loginResult.getAccessToken();
-                GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(),
-                        new GraphRequest.GraphJSONObjectCallback() {
-                            @Override
-                            public void onCompleted(JSONObject object,GraphResponse response) {
-                                try {
-                                    Toast.makeText(ConnectToFacebookActivity.this, "Logged in as " + object.getString("name"), Toast.LENGTH_SHORT).show();
-                                    String id = object.getString("id");
-                                    String name = object.getString("name");
-                                    String link = object.getString("link");
-                                } catch(JSONException ex) {
-                                    ex.printStackTrace();
-                                }
-                            }
-                        });
-                Bundle parameters = new Bundle();
-                parameters.putString("fields", "id,name,link");
-                request.setParameters(parameters);
-                request.executeAsync();
 
-                Class nextActivity = DisplayFbProfileActivity.class;
-                Intent intent = new Intent(ConnectToFacebookActivity.this, nextActivity);
-                startActivity(intent);
+                startNextActivity();
             }
 
             @Override
@@ -99,6 +74,20 @@ public class ConnectToFacebookActivity extends AppCompatActivity {
                 Log.d(TAG, error.toString());
             }
         });
+
+        if (AccessToken.getCurrentAccessToken() != null) {
+            Log.d(TAG, "Already logged in!");
+            startNextActivity();
+        } else
+            Log.d(TAG, "sono arrivato qui ignorando l'if");
+
+    }
+
+    private void startNextActivity () {
+        Class nextActivity = DisplayFbProfileActivity.class;
+        Intent intent = new Intent(ConnectToFacebookActivity.this, nextActivity);
+        Log.d(TAG, "Let's go to next activity");
+        startActivity(intent);
     }
 
     @Override

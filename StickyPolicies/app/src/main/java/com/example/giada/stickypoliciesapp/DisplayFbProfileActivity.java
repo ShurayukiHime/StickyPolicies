@@ -1,12 +1,17 @@
 package com.example.giada.stickypoliciesapp;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.GridView;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
@@ -22,6 +27,16 @@ public class DisplayFbProfileActivity extends AppCompatActivity {
     private ProfilePictureView mProfilePicture;
     private CollapsingToolbarLayout mCollapsingToolbar;
     private AccessToken accessToken;
+    private String TAG = "DisplayFbProfileActivit";
+
+    @Override
+    public void onBackPressed() {
+        Log.d(TAG, "Going back to MainActivity");
+        Context context = DisplayFbProfileActivity.this;
+        Class destinationActivity = MainActivity.class;
+        Intent startXmlParser = new Intent(context, destinationActivity);
+        startActivity(startXmlParser);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,9 +56,21 @@ public class DisplayFbProfileActivity extends AppCompatActivity {
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        GridView gridview = (GridView) findViewById(R.id.gridview);
+        gridview.setAdapter(new ImageAdapter(this));
+
+        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v,
+                                    int position, long id) {
+                Toast.makeText(DisplayFbProfileActivity.this, "" + position,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
         mCollapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.toolbar_layout);
-        mProfilePicture = (ProfilePictureView) findViewById(R.id.userProfilePicture);
-        mProfilePicture.setProfileId(accessToken.getUserId());
+        //mProfilePicture = (ProfilePictureView) findViewById(R.id.userProfilePicture);
+        //mProfilePicture.setProfileId(accessToken.getUserId());
 
         GraphRequest request = GraphRequest.newMeRequest(accessToken,
                 new GraphRequest.GraphJSONObjectCallback() {
@@ -52,16 +79,14 @@ public class DisplayFbProfileActivity extends AppCompatActivity {
                         try {
                             Toast.makeText(DisplayFbProfileActivity.this, "Logged in as " + object.getString("name"), Toast.LENGTH_SHORT).show();
                             mCollapsingToolbar.setTitle(object.getString("name"));
-                            mProfilePicture.setProfileId(object.getString("id"));
                         } catch (JSONException ex) {
                             ex.printStackTrace();
                         }
                     }
                 });
         Bundle parameters = new Bundle();
-        parameters.putString("fields", "id, name,picture");
+        parameters.putString("fields", "name,picture");
         request.setParameters(parameters);
         request.executeAsync();
-
     }
 }
