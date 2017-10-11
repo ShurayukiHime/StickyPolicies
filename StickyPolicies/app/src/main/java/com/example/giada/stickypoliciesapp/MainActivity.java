@@ -12,6 +12,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button mSwitchToXmlParsingButton;
     private Button mConnectToFacebookButton;
+    private Button mServerPathButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +40,18 @@ public class MainActivity extends AppCompatActivity {
                 Class destinationActivity = ConnectToFacebookActivity.class;
                 Intent connectToSocial = new Intent(context, destinationActivity);
                 startActivity(connectToSocial);
+            }
+        });
+
+        mServerPathButton = (Button) findViewById(R.id.server_path);
+        mServerPathButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("MainActivity", "Server_Path button Clicked!");
+                Context context = MainActivity.this;
+                Class destinationActivity = PolicyClient.class;
+                Intent connectToServer = new Intent(context, destinationActivity);
+                startActivity(connectToServer);
             }
         });
     }

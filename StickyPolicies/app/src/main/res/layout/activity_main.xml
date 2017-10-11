@@ -53,5 +53,15 @@
         android:text="@string/connect_to_facebook"
         app:layout_constraintLeft_toLeftOf="parent"
         tools:layout_editor_absoluteY="71dp" />
+
+    <Button
+        android:id="@+id/server_path"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:text="@string/server_path"
+        app:layout_constraintLeft_toLeftOf="parent"
+        tools:layout_editor_absoluteY="71dp" />
 </LinearLayout>
 </android.support.constraint.ConstraintLayout>

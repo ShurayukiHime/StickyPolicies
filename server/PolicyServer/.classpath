@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
+	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
+	<classpathentry kind="lib" path="03a_TecWeb/web/WEB-INF/lib/00_TecWeb_solved.jar"/>
+	<classpathentry kind="lib" path="03a_TecWeb/lib/jsp-api.jar"/>
+	<classpathentry kind="lib" path="03a_TecWeb/lib/junit4_4.3.1.jar"/>
+	<classpathentry kind="lib" path="03a_TecWeb/lib/servlet-api.jar"/>
+	<classpathentry kind="lib" path="03a_TecWeb/lib/soap.jar"/>
+	<classpathentry kind="lib" path="03a_TecWeb/lib/00_TecWeb_solved.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jst.server.core.container/org.eclipse.jst.server.preview.runtimeTarget/J2EE Preview">
+		<attributes>
+			<attribute name="owner.project.facets" value="jst.web"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.8.0_91">
+		<attributes>
+			<attribute name="owner.project.facets" value="java"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="build/classes"/>
+</classpath>

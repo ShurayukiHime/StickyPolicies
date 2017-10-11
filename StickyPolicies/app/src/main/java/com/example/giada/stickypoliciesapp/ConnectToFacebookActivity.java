@@ -20,6 +20,7 @@ import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.ProfileTracker;
+import com.facebook.login.LoginBehavior;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
@@ -44,13 +45,11 @@ public class ConnectToFacebookActivity extends AppCompatActivity {
         setContentView(R.layout.activity_connect_to_facebook);
         Log.d(TAG, "Entered the activity");
 
-        // https://graph.accountkit.com/v1.2/logout?access_token={user_access_token}
         //LoginManager.getInstance().logOut();
 
-
         mFacebookLoginButton = (LoginButton) findViewById(R.id.login_button);
-
         callbackManager = CallbackManager.Factory.create();
+        LoginManager.getInstance().setLoginBehavior(LoginBehavior.KATANA_ONLY);
         mFacebookLoginButton.setReadPermissions("email");
         mFacebookLoginButton.setReadPermissions(Arrays.asList("user_photos"));
         mFacebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
@@ -77,10 +76,9 @@ public class ConnectToFacebookActivity extends AppCompatActivity {
 
         if (AccessToken.getCurrentAccessToken() != null) {
             Log.d(TAG, "Already logged in!");
+            //LoginManager.getInstance().logOut();
             startNextActivity();
-        } else
-            Log.d(TAG, "sono arrivato qui ignorando l'if");
-
+        }
     }
 
     private void startNextActivity () {
@@ -95,5 +93,4 @@ public class ConnectToFacebookActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         callbackManager.onActivityResult(requestCode, resultCode, data);
     }
-
 }

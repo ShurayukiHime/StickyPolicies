@@ -59,6 +59,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.giada.stickypoliciesapp.ConnectToFacebookActivity" />
         </activity>
+        <activity android:name=".PolicyClient"></activity>
     </application>
 
 </manifest>
