@@ -33,19 +33,24 @@ limitations under the License.
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.giada.stickypoliciesapp.PolicyClient">
 
-    <EditText
-        android:id="@+id/et_search_box"
+    <Button
+        android:id="@+id/button2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter a query, then click Search"
-        android:textSize="22sp" />
+        android:text="User Management" />
+
+    <Button
+        android:id="@+id/button3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Policy Stuff" />
 
     <TextView
         android:id="@+id/tv_url_display"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Click search and your URL will show up here!"
+        android:text="Click and your URL will show up here!"
         android:textSize="22sp" />
 
     <ScrollView

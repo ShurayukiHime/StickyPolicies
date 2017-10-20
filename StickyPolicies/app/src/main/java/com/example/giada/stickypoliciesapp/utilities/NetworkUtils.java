@@ -24,40 +24,33 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
 
-/**
- * These utilities will be used to communicate with the network.
- */
 public class NetworkUtils {
 
     final static String MY_BASE_URL_PORT =
             "192.168.1.8:8080";
     // "10.0.2.2:8080";
 
-    final static String PARAM_QUERY = "q";
+    final static String MY_SERVER_DOMAIN = "PolicyServer";
 
-    /*
-     * The sort field. One of stars, forks, or updated.
-     * Default: results are sorted by best match if no field is specified.
-     */
-    final static String PARAM_SORT = "sort";
-    final static String sortBy = "stars";
+    final static String USER_MGMY_PATH = "usrmgmt";
+    final static String POLICY_MGMT_PATH = "plcmgmt";
 
     /**
      * Builds the URL used to query GitHub.
      *
-     * @param githubSearchQuery The keyword that will be queried for.
+     * @param searchQuery The keyword that will be queried for.
      * @return The URL to use to query the GitHub.
      */
-    public static URL buildUrl(String githubSearchQuery) {
+    public static URL buildUrl(String searchQuery) {
         /*Uri builtUri = Uri.parse(GITHUB_BASE_URL).buildUpon()
-                .appendQueryParameter(PARAM_QUERY, githubSearchQuery)
+                .appendQueryParameter(PARAM_QUERY, searchQuery)
                 .appendQueryParameter(PARAM_SORT, sortBy)
                 .build();*/
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http")
                 .encodedAuthority(MY_BASE_URL_PORT)
-                .appendPath("03a_TecWeb")
-                .appendPath(githubSearchQuery);
+                .appendPath(MY_SERVER_DOMAIN)
+                .appendPath(searchQuery);
         Uri builtUri = builder.build();
 
         URL url = null;
