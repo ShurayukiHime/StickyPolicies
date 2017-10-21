@@ -1,4 +1,4 @@
-package com.example.giada.stickypoliciesserver;
+package com.example.giada.stickypolicies.server;
 
 import java.io.IOException;
 import java.io.PrintWriter;

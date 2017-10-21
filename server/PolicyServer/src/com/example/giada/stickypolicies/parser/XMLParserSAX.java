@@ -1,4 +1,4 @@
-package main;
+package com.example.giada.stickypolicies.parser;
 
 import java.io.IOException;
 

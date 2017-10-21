@@ -1,0 +1,26 @@
+﻿<?xml version="1.0"?>
+<stickyPolicy xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="PKIstickypolicy.xsd">
+	<dataPackage>
+			<pkiPolicy> 
+				<trustedAuthority> 
+					address and location of the Trusted Authority 
+				</trustedAuthority> 
+				<owner> 
+					<referenceName> pseudonym1 </referenceName>
+					<ownersDetails>  encrypted call back address</ownersDetails>
+				</owner> 
+				<policy>
+					<target> name of the identity or profile attribute</target> 
+					<validity> 
+						<giorno>07</giorno>
+                    	<mese>12</mese>
+                    	<anno>2022</anno>
+					</validity> 
+					<constraint>require_strong_X.509_authentication</constraint> 
+					<constraint> allow_sharing_of_data </constraint> 
+					<action>notify_owner </action>
+				</policy>
+			</pkiPolicy> 
+			<encryptedData> encrypted attribute value, using the above policy as IBE public key</encryptedData> 
+	</dataPackage>
+</stickyPolicy>

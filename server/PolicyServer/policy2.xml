@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<stickyPolicy xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="PKIstickypolicy.xsd">
+
+    <dataPackage>
+
+      <pkiPolicy>
+            <trustedAuthority>trustedAuthority1</trustedAuthority>
+
+         <owner>
+                <referenceName>referenceName1</referenceName>
+                <ownersDetails>ownersDetails1</ownersDetails>
+                <ownersDetails>ownersDetails2</ownersDetails>
+            </owner>
+
+         <policy>
+                <target>target1</target>
+                <target>target2</target>
+                <validity>
+                    <giorno>17</giorno>
+                    <mese>9</mese>
+                    <anno>2025</anno>
+                </validity>
+                <constraint>constraint1</constraint>
+                <constraint>constraint2</constraint>
+                <action>action1</action>
+            </policy>
+
+         <policy>
+                <target>target3</target>
+                <validity>
+                    <giorno>6</giorno>
+                    <mese>11</mese>
+                    <anno>2024</anno>
+                </validity>
+                <constraint>constraint3</constraint>
+                <constraint>constraint4</constraint>
+                <action>action2</action>
+                <action>action3</action>
+            </policy>
+        </pkiPolicy>
+        <encryptedData>encryptedData1</encryptedData>
+    </dataPackage>
+    <dataPackage>
+
+      <pkiPolicy>
+            <trustedAuthority>trustedAuthority2</trustedAuthority>
+            <trustedAuthority>trustedAuthority3</trustedAuthority>
+
+         <owner>
+                <referenceName>referenceName2</referenceName>
+                <ownersDetails>ownersDetails3</ownersDetails>
+                <ownersDetails>ownersDetails4</ownersDetails>
+            </owner>
+
+         <policy>
+                <target>target4</target>
+                <target>target5</target>
+                <validity>
+                    <giorno>23</giorno>
+                    <mese>8</mese>
+                    <anno>2021</anno>
+                </validity>
+                <constraint>constraint5</constraint>
+                <action>action4</action>
+            </policy>
+
+         <policy>
+                <target>target6</target>
+                <validity>
+                    <giorno>25</giorno>
+                    <mese>5</mese>
+                    <anno>2020</anno>
+                </validity>
+                <constraint>constraint6</constraint>
+                <constraint>constraint7</constraint>
+                <action>action5</action>
+                <action>action6</action>
+            </policy>
+        </pkiPolicy>
+        <encryptedData>encryptedData2</encryptedData>
+    </dataPackage>
+</stickyPolicy>

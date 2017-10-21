@@ -10,19 +10,25 @@
 	
 	<xs:complexType name="dataPackageType">
 		<xs:sequence>
-			<xs:element name="policy" type="policyType" maxOccurs="1" minOccurs="1"/>
+			<xs:element name="pkiPolicy" type="pkiPolicyType" maxOccurs="1" minOccurs="1"/>
 			<xs:element name="encryptedData" type="xs:string" maxOccurs="1" minOccurs="1" />
 	</xs:sequence>
 	</xs:complexType>
 
-	<xs:complexType name="policyType">
+	<xs:complexType name="pkiPolicyType">
 		<xs:sequence>
 			<xs:element name="trustedAuthority" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
 			<xs:element name="owner" type="ownerType" maxOccurs="1" minOccurs="1" />
+			<xs:element name="policy" type="policyType" maxOccurs="unbounded" minOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="policyType">
+		<xs:sequence>
 			<xs:element name="target" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
 			<xs:element name="validity" type="dataType" maxOccurs="1" minOccurs="1" />
-			<xs:element name="constraint" type="xs:string" />
-			<xs:element name="action" type="xs:string" />
+			<xs:element name="constraint" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
+			<xs:element name="action" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
 		</xs:sequence>
 	</xs:complexType>
 	

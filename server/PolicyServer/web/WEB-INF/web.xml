@@ -19,7 +19,7 @@
     <!-- Define servlets that are included in the application -->    
     <servlet>
 		<servlet-name>UserManagementServlet</servlet-name>
-		<servlet-class>com.example.giada.stickypoliciesserver.UserManagementServlet</servlet-class>
+		<servlet-class>com.example.giada.stickypolicies.server.UserManagementServlet</servlet-class>
 		<init-param>
  			<param-name>paramName</param-name>
 			<param-value>paramValue</param-value>
@@ -33,7 +33,7 @@
 	
 	<servlet>
 		<servlet-name>PolicyManagementServlet</servlet-name>
-		<servlet-class>com.example.giada.stickypoliciesserver.PolicyManagementServlet</servlet-class>
+		<servlet-class>com.example.giada.stickypolicies.server.PolicyManagementServlet</servlet-class>
 		<init-param>
  			<param-name>paramName</param-name>
 			<param-value>paramValue</param-value>

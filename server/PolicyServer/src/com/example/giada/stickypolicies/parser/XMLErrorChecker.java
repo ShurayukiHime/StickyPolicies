@@ -1,4 +1,4 @@
-package com.example.giada.stickypoliciesparser;
+package com.example.giada.stickypolicies.parser;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;

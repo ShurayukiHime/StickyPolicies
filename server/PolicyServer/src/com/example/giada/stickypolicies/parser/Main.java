@@ -1,6 +1,4 @@
-package main;
-
-import org.w3c.dom.*;
+package com.example.giada.stickypolicies.parser;
 
 public class Main {
 
@@ -8,14 +6,14 @@ public class Main {
 		System.out.print("======================== SAX ===========================\n");
 		
 		// Utilizzo SAX
-		String fileName = "addressList";
+		String fileName = "policy2";
 		XMLParserSAX parser = new XMLParserSAX(fileName);
 	    ContentHandler_SAX handler = parser.getHandler();
 	    
 		// 4) visualizzare il risultato
 		System.out.println("SAX IgnorableWhitespace = " + handler.getIgnorableWhitespace());
-		System.out.println("SAX PeopleAmount = " + handler.getPeopleAmount());
-		System.out.println("SAX PeoplePreMM = " + handler.getPeoplePreMM());
-		System.out.println("SAX DonTel = " + handler.getDonTel());
+		System.out.println("SAX pkipolicy trovate = " + handler.getStickyPolicies().size());
+		System.out.println("SAX toString = " + handler.getStickyPolicies().get(1).toString());
 		System.out.print("========================================================\n\n");
 	}
+}
