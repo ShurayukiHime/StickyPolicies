@@ -4,29 +4,17 @@
 
 	<xs:complexType name="stickyPolicyType">
 		<xs:sequence>
-			<xs:element name="dataPackage" type="dataPackageType" maxOccurs="unbounded" minOccurs="1"/>
-	</xs:sequence>
-	</xs:complexType>
-	
-	<xs:complexType name="dataPackageType">
-		<xs:sequence>
-			<xs:element name="pkiPolicy" type="pkiPolicyType" maxOccurs="1" minOccurs="1"/>
-			<xs:element name="encryptedData" type="xs:string" maxOccurs="1" minOccurs="1" />
-	</xs:sequence>
-	</xs:complexType>
-
-	<xs:complexType name="pkiPolicyType">
-		<xs:sequence>
 			<xs:element name="trustedAuthority" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
 			<xs:element name="owner" type="ownerType" maxOccurs="1" minOccurs="1" />
 			<xs:element name="policy" type="policyType" maxOccurs="unbounded" minOccurs="1" />
-		</xs:sequence>
+	</xs:sequence>
 	</xs:complexType>
 	
 	<xs:complexType name="policyType">
 		<xs:sequence>
 			<xs:element name="target" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
-			<xs:element name="validity" type="dataType" maxOccurs="1" minOccurs="1" />
+			<xs:element name="dataType" type="dataType" maxOccurs="unbounded" minOccurs="1" />
+			<xs:element name="validity" type="dateType" maxOccurs="1" minOccurs="1" />
 			<xs:element name="constraint" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
 			<xs:element name="action" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
 		</xs:sequence>
@@ -38,8 +26,18 @@
 			<xs:element name="ownersDetails" type="xs:string" maxOccurs="unbounded" minOccurs="1"  />
 		</xs:sequence>
 	</xs:complexType>
+	
+	<xs:simpleType name="dataType" >
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="picture" />
+			<xs:enumeration value="text" />
+			<xs:enumeration value="video" />
+			<xs:enumeration value="audio" />
+			<xs:enumeration value="position" />
+		</xs:restriction>
+	</xs:simpleType>
 
-	<xs:complexType name="dataType">
+	<xs:complexType name="dateType">
 		<xs:sequence>
 			<xs:element name="giorno" type="giornoType" />
 			<xs:element name="mese" type="meseType" />

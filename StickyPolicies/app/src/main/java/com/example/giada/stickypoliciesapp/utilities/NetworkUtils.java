@@ -17,8 +17,12 @@ package com.example.giada.stickypoliciesapp.utilities;
 
 import android.net.Uri;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -32,17 +36,11 @@ public class NetworkUtils {
 
     final static String MY_SERVER_DOMAIN = "PolicyServer";
 
-    final static String USER_MGMY_PATH = "usrmgmt";
+    final static String USER_MGMT_PATH = "usrmgmt";
     final static String POLICY_MGMT_PATH = "plcmgmt";
 
-    /**
-     * Builds the URL used to query GitHub.
-     *
-     * @param searchQuery The keyword that will be queried for.
-     * @return The URL to use to query the GitHub.
-     */
     public static URL buildUrl(String searchQuery) {
-        /*Uri builtUri = Uri.parse(GITHUB_BASE_URL).buildUpon()
+        /*Uri builtUri = Uri.parse(MY_BASE_URL_PORT + "/" + MY_SERVER_DOMAIN + "/" + USER_MGMT_PATH).buildUpon()
                 .appendQueryParameter(PARAM_QUERY, searchQuery)
                 .appendQueryParameter(PARAM_SORT, sortBy)
                 .build();*/
@@ -50,12 +48,14 @@ public class NetworkUtils {
         builder.scheme("http")
                 .encodedAuthority(MY_BASE_URL_PORT)
                 .appendPath(MY_SERVER_DOMAIN)
-                .appendPath(searchQuery);
+                .appendPath(USER_MGMT_PATH);
+                //.appendPath(searchQuery);
         Uri builtUri = builder.build();
 
         URL url = null;
         try {
-            url = new URL(builtUri.toString());
+            String prettyString = builtUri.toString();
+            url = new URL((builtUri.toString()));
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -63,16 +63,22 @@ public class NetworkUtils {
         return url;
     }
 
-    /**
-     * This method returns the entire result from the HTTP response.
-     *
-     * @param url The URL to fetch the HTTP response from.
-     * @return The contents of the HTTP response.
-     * @throws IOException Related to network and stream reading
-     */
-    public static String getResponseFromHttpUrl(URL url) throws IOException {
+    public static String getResponseFromHttpUrl(URL url, String policy) throws IOException {
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setDoOutput(true);
+            urlConnection.setChunkedStreamingMode(0);
+
+            OutputStream out = urlConnection.getOutputStream();
+            BufferedWriter writer = new BufferedWriter(
+                    new OutputStreamWriter(out, "UTF-8"));
+            writer.write(policy);
+            writer.flush();
+            writer.close();
+            out.close();
+            urlConnection.connect();
+
             InputStream in = urlConnection.getInputStream();
 
             Scanner scanner = new Scanner(in);

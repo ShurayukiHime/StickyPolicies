@@ -34,13 +34,13 @@ limitations under the License.
     tools:context="com.example.giada.stickypoliciesapp.PolicyClient">
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/user_management_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="User Management" />
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/policy_stuff_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Policy Stuff" />

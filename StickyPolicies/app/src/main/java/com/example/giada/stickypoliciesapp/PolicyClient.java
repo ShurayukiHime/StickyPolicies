@@ -1,29 +1,37 @@
 package com.example.giada.stickypoliciesapp;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.giada.stickypoliciesapp.utilities.NetworkUtils;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 
 public class PolicyClient extends AppCompatActivity {
 
-    private EditText mSearchBoxEditText;
-
     private TextView mUrlDisplayTextView;
-
+    private Button mUserManagementButton;
     private TextView mSearchResultsTextView;
 
     private String TAG = "PolicyClient";
+    private String policy = "this is a cool policy!";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,48 +39,69 @@ public class PolicyClient extends AppCompatActivity {
         setContentView(R.layout.activity_policy_client);
         Log.d(TAG, "entered policy client!");
 
-        mSearchBoxEditText = (EditText) findViewById(R.id.et_search_box);
-
         mUrlDisplayTextView = (TextView) findViewById(R.id.tv_url_display);
         mSearchResultsTextView = (TextView) findViewById(R.id.tv_github_search_results_json);
+
+        mUserManagementButton = (Button) findViewById(R.id.user_management_button);
+        mUserManagementButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("PolicyClient", "usrmgmt button Clicked!");
+                depositPolicyRequest();
+            }
+        });
     }
 
-    /**
-     * This method retrieves the search text from the EditText, constructs the
-     * URL (using {@link NetworkUtils}) for the github repository you'd like to find, displays
-     * that URL in a TextView, and finally fires off an AsyncTask to perform the GET request using
-     * our {@link GithubQueryTask}
-     */
-    private void makeGithubSearchQuery() {
-        String githubQuery = mSearchBoxEditText.getText().toString();
-        URL githubSearchUrl = NetworkUtils.buildUrl(githubQuery);
-        mUrlDisplayTextView.setText(githubSearchUrl.toString());
-        // COMPLETED (4) Create a new GithubQueryTask and call its execute method, passing in the url to query
-        new GithubQueryTask().execute(githubSearchUrl);
+    private void depositPolicyRequest() {
+        String githubQuery = ""; //eventually insert a textbox and retrieve this value from user input
+        URL serverURL = NetworkUtils.buildUrl(githubQuery);
+        mUrlDisplayTextView.setText(serverURL.toString());
+
+        String policyfile = "/PolicyFolder/policy1.xml";
+        String filePath = Environment.getExternalStorageDirectory() + policyfile;
+        File f = new File(filePath);
+        if (f.exists()) {
+            StringBuilder sb = new StringBuilder();
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(f));
+                String line;
+
+                while ((line = br.readLine()) != null) {
+                    sb.append(line);
+                    sb.append('\n');
+                }
+                br.close();
+            }
+            catch (IOException e) {
+                //You'll need to add proper error handling here
+                Log.d(TAG, e.getLocalizedMessage());
+            }
+            policy = sb.toString();
+        } else {
+            Toast.makeText(this, "File doesn't exist :(", Toast.LENGTH_LONG);
+        }
+        new DepositPolicyTask().execute(serverURL);
     }
 
-    // COMPLETED (1) Create a class called GithubQueryTask that extends AsyncTask<URL, Void, String>
-    public class GithubQueryTask extends AsyncTask<URL, Void, String> {
+    public class DepositPolicyTask extends AsyncTask<URL, Void, String> {
 
-        // COMPLETED (2) Override the doInBackground method to perform the query. Return the results. (Hint: You've already written the code to perform the query)
         @Override
         protected String doInBackground(URL... params) {
             URL searchUrl = params[0];
-            String githubSearchResults = null;
+            String depositPolicyRequestResults = null;
             try {
-                githubSearchResults = NetworkUtils.getResponseFromHttpUrl(searchUrl);
+                depositPolicyRequestResults = NetworkUtils.getResponseFromHttpUrl(searchUrl, policy);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return githubSearchResults;
+            return depositPolicyRequestResults;
         }
 
-        // COMPLETED (3) Override onPostExecute to display the results in the TextView
         @Override
-        protected void onPostExecute(String githubSearchResults) {
-            if (githubSearchResults != null && !githubSearchResults.equals("")) {
+        protected void onPostExecute(String depositPolicyRequestResults) {
+            if (depositPolicyRequestResults != null && !depositPolicyRequestResults.equals("")) {
                 //mSearchResultsTextView.setText(githubSearchResults);
-                mSearchResultsTextView.setText(Html.fromHtml(githubSearchResults));
+                mSearchResultsTextView.setText(Html.fromHtml(depositPolicyRequestResults));
             }
         }
     }
@@ -86,8 +115,8 @@ public class PolicyClient extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemThatWasClickedId = item.getItemId();
-        if (itemThatWasClickedId == R.id.action_search) {
-            makeGithubSearchQuery();
+        if (itemThatWasClickedId == R.id.user_management_button) {
+            depositPolicyRequest();
             return true;
         }
         return super.onOptionsItemSelected(item);
