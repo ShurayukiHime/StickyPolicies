@@ -1,7 +1,20 @@
-\chapter{cap 3}
-\label{Introduzione}
+\chapter{Getting one's hands dirty}
+\label{chapter3}
 \thispagestyle{empty}
 
-\noindent Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+\noindent First, we set up the necessary entities to implement \textit{Sticky Policies}: an Android client and a service provider. The client was developed using Android Studio, while for the service provider, we used Eclipse together with Apache Tomcat; the communication was implemented through HTTP protocol.
 
-\section{sezione} Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+// ADD SOME TECHNICAL DETAILS
+
+\section{Implementing Sticky Policies through XML}
+The first experiment involved realizing \textit{Sticky Policies} via XML files. This approach was motivated by \cite{mont2003towards}, and an example XML policy was created taking as a reference the one presented in the same paper.
+
+In this scenario, two entities, an Android client and a server, communicate between each others and two different kinds of protocols are possible. 
+
+To ensure compatibility, we rely on an XML grammar defined through a XSD file.
+
+Server side, a the received policies are parsed and checked for compliance; ADMITTED policies
+
+ an XML grammar was specified through a XSD file, and a parser was implemented server-side to check the received policy files for compliance; default behaviour for non-compliant policy was disclosure refusal.
+
+More specifically,

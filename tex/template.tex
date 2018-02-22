@@ -10,6 +10,30 @@
 \usepackage{fancyhdr}
 \usepackage{indentfirst}
 \usepackage{newlfont}
+\usepackage{color}
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\usepackage{listings}
+\lstset{ 
+	backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
+	breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+	breaklines=true,                 % sets automatic line breaking
+	escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+	extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+	keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+	basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+	numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+	numbersep=5pt,                   % how far the line-numbers are from the code
+	language=XML,                	 % the language of the code
+	commentstyle=\color{mygreen},    % comment style
+	keywordstyle=\color{blue},       % keyword style
+	numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+	rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+	stringstyle=\color{mymauve},     % string literal style
+}
+
 
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -55,11 +79,25 @@
 	\include{capitolo3}
 
 	\clearpage{\pagestyle{empty}\cleardoublepage}
-	\addcontentsline{toc}{chapter}{Bibliografia}
+	\addcontentsline{toc}{chapter}{Bibliography}
 	\bibliographystyle{plainurl}
 	\bibliography{bibl_tesi}
 
 	\clearpage{\pagestyle{empty}\cleardoublepage}	
-	\include{ringraziamenti}
+	\include{Acknowledgements}
+	
+	\appendix
+	
+	\pagestyle{fancy} 
+	\fancyfoot{}                                               
+	\renewcommand{\chaptermark}[1]{\markboth{\appendixname\ \thechapter.\ #1}{}} 
+	\renewcommand{\sectionmark}[1]{\markright{\thesection.\ #1}}         
+	\fancyhead[LE,RO]{\bfseries\thepage}    
+	
+	\fancyhead[RE]{\bfseries\leftmark}    
+	\fancyhead[LO]{\bfseries\rightmark}     
+	\renewcommand{\headrulewidth}{0.3pt} 
+	
+	\include{appendixA}
 
 \end{document}

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="stickyPolicy" type="stickyPolicyType" />
+
+	<xs:complexType name="stickyPolicyType">
+		<xs:sequence>
+			<xs:element name="trustedAuthority" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
+			<xs:element name="owner" type="ownerType" maxOccurs="1" minOccurs="1" />
+			<xs:element name="policy" type="policyType" maxOccurs="unbounded" minOccurs="1" />
+	</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="policyType">
+		<xs:sequence>
+			<xs:element name="target" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
+			<xs:element name="dataType" type="dataType" maxOccurs="unbounded" minOccurs="1" />
+			<xs:element name="validity" type="dateType" maxOccurs="1" minOccurs="1" />
+			<xs:element name="constraint" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
+			<xs:element name="action" type="xs:string" maxOccurs="unbounded" minOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="ownerType">
+		<xs:sequence>
+			<xs:element name="referenceName" type="xs:string" maxOccurs="1" minOccurs="1"  />
+			<xs:element name="ownersDetails" type="xs:string" maxOccurs="unbounded" minOccurs="1"  />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:simpleType name="dataType" >
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="picture" />
+			<xs:enumeration value="text" />
+			<xs:enumeration value="video" />
+			<xs:enumeration value="audio" />
+			<xs:enumeration value="position" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="dateType">
+		<xs:sequence>
+			<xs:element name="giorno" type="giornoType" />
+			<xs:element name="mese" type="meseType" />
+			<xs:element name="anno" type="annoType" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:simpleType name="giornoType" >
+		<xs:restriction base="xs:positiveInteger">
+			<xs:minInclusive value="1" />
+			<xs:maxInclusive value="31" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="meseType" >
+		<xs:restriction base="xs:positiveInteger">
+			<xs:minInclusive value="1" />
+			<xs:maxInclusive value="12" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="annoType" >
+			<xs:restriction base="xs:positiveInteger">
+			<xs:minInclusive value="2017" />
+			<xs:maxInclusive value="2027" />
+			</xs:restriction>
+	</xs:simpleType>
+</xs:schema>
