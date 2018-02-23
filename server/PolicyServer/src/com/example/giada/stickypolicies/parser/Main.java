@@ -12,8 +12,8 @@ public class Main {
 	    
 		// 4) visualizzare il risultato
 		System.out.println("SAX IgnorableWhitespace = " + handler.getIgnorableWhitespace());
-		System.out.println("SAX pkipolicy trovate = " + handler.getStickyPolicies().size());
-		System.out.println("SAX toString = " + handler.getStickyPolicies().get(1).toString());
+		System.out.println("SAX pkipolicy trovate = " + handler.getStickyPolicy());
+		System.out.println("SAX toString = " + handler.getStickyPolicy().toString());
 		System.out.print("========================================================\n\n");
 	}
 }

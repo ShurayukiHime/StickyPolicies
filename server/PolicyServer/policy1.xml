@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<stickyPolicy xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="PKIstickypolicy2.xsd">
+<stickyPolicy xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="PKIstickypolicy.xsd">
 
     <trustedAuthority>trustedAuthority1</trustedAuthority>
     <trustedAuthority>trustedAuthority2</trustedAuthority>

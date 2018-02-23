@@ -12,11 +12,9 @@ import com.example.giada.stickypolicies.model.PKIPolicy;
 
 public class ContentHandler_SAX extends DefaultHandler {
 
-	private List<PKIPolicy> stickyPolicy = new ArrayList<PKIPolicy>();
 	private List<String> tempData = new ArrayList<String>();
-	private PKIPolicy temp;
+	private PKIPolicy stickyPolicy;
 
-	private boolean isInDataPackage = false;
 	private boolean isInPkiPolicy = false;
 	private boolean isInPolicy = false;
 	private boolean isInOwner = false;
@@ -32,6 +30,9 @@ public class ContentHandler_SAX extends DefaultHandler {
 
 	private boolean isInTarget = false;
 	private String[] target;
+	
+	private boolean isInDataType = false;
+	private String[] dataType;
 
 	private boolean isInConstraint = false;
 	private boolean constraintFlag = false;
@@ -39,9 +40,6 @@ public class ContentHandler_SAX extends DefaultHandler {
 
 	private boolean isInAction = false;
 	private String[] action;
-
-	private boolean isInEncryptedData = false;
-	private String encryptedData;
 
 	private boolean isInValidity = false;
 	private boolean isInGiorno = false;
@@ -53,19 +51,19 @@ public class ContentHandler_SAX extends DefaultHandler {
 	private Date tempExpiryDate;
 
 	public void startElement(String namespaceURI, String localName, String rawName, Attributes atts) {
-		if (localName.equals("dataPackage")) {
-			isInDataPackage = true;
-		} else if (localName.equals("pkiPolicy")) {
+		if (localName.equals("stickyPolicy")) {
 			isInPkiPolicy = true;
 		} else if (localName.equals("trustedAuthority")) {
 			isInTrustedAuthority = true;
 		} else if (localName.equals("owner")) {
 			isInOwner = true;
-			// inizializziamo pkipolicy qui perchè ci piacciono le cose fatte
-			// male *thumbs up*
-			trustedAuthority = new String[tempData.size()];
-			tempData.toArray(trustedAuthority);
-			tempData = new ArrayList<String>();
+			if (!tempData.isEmpty()) {
+				// inizializziamo pkipolicy qui perchè ci piacciono le cose fatte
+				// male *thumbs up*
+				trustedAuthority = new String[tempData.size()];
+				tempData.toArray(trustedAuthority);
+				tempData = new ArrayList<String>();
+			}
 		} else if (localName.equals("referenceName")) {
 			isInReferenceName = true;
 		} else if (localName.equals("ownersDetails")) {
@@ -74,10 +72,15 @@ public class ContentHandler_SAX extends DefaultHandler {
 			isInPolicy = true;
 		} else if (localName.equals("target")) {
 			isInTarget = true;
-		} else if (localName.equals("validity")) {
-			isInValidity = true;
+		} else if (localName.equals("dataType")) {
+			isInDataType = true;
 			target = new String[tempData.size()];
 			tempData.toArray(target);
+			tempData = new ArrayList<String>();
+		} else if (localName.equals("validity")) {
+			isInValidity = true;
+			dataType = new String[tempData.size()];
+			tempData.toArray(dataType);
 			tempData = new ArrayList<String>();
 		} else if (localName.equals("giorno")) {
 			isInGiorno = true;
@@ -95,8 +98,6 @@ public class ContentHandler_SAX extends DefaultHandler {
 				tempData = new ArrayList<String>();
 				constraintFlag = false;
 			}
-		} else if (localName.equals("encryptedData")) {
-			isInEncryptedData = true;
 		}
 	}
 
@@ -105,7 +106,7 @@ public class ContentHandler_SAX extends DefaultHandler {
 	 * aggiornare i valori in String che avevamo sopra.
 	 */
 	public void characters(char ch[], int start, int length) {
-		if (isInPkiPolicy && isInDataPackage) {
+		if (isInPkiPolicy) {
 			if (isInTrustedAuthority) {
 				tempData.add(new String(ch, start, length));
 			} else if (isInOwner) {
@@ -116,6 +117,8 @@ public class ContentHandler_SAX extends DefaultHandler {
 				}
 			} else if (isInPolicy) {
 				if (isInTarget) {
+					tempData.add(new String(ch, start, length));
+				} else if (isInDataType) {
 					tempData.add(new String(ch, start, length));
 				} else if (isInValidity) {
 					if (isInGiorno)
@@ -130,8 +133,6 @@ public class ContentHandler_SAX extends DefaultHandler {
 					tempData.add(new String(ch, start, length));
 				}
 			}
-		} else if (isInEncryptedData) {
-			encryptedData = new String(ch, start, length);
 		}
 	}
 
@@ -141,10 +142,7 @@ public class ContentHandler_SAX extends DefaultHandler {
 	 * incapsulato.
 	 */
 	public void endElement(String namespaceURI, String localName, String qName) {
-		if (localName.equals("dataPackage")) {
-			isInDataPackage = false;
-			stickyPolicy.add(temp);
-		} else if (localName.equals("pkiPolicy")) {
+		if (localName.equals("stickyPolicy")) {
 			isInPkiPolicy = false;
 		} else if (localName.equals("trustedAuthority")) {
 			isInTrustedAuthority = false;
@@ -158,10 +156,12 @@ public class ContentHandler_SAX extends DefaultHandler {
 			tempData.toArray(ownersDetails);
 			tempData = new ArrayList<String>();
 			
-			temp = new PKIPolicy(trustedAuthority, encryptedData);
-			temp.setOwner(referenceName, ownersDetails);
+			stickyPolicy = new PKIPolicy(trustedAuthority);
+			stickyPolicy.setOwner(referenceName, ownersDetails);
 		} else if (localName.equals("target")) {
 			isInTarget = false;
+		} else if (localName.equals("dataType")) {
+			isInDataType = false;
 		} else if (localName.equals("giorno")) {
 			isInGiorno = false;
 		} else if (localName.equals("mese")) {
@@ -182,10 +182,8 @@ public class ContentHandler_SAX extends DefaultHandler {
 			tempData.toArray(action);
 			tempData = new ArrayList<String>();
 			
-			temp.addPolicy(target, tempExpiryDate, constraint, action);
-		} else if (localName.equals("encryptedData")) {
-			isInEncryptedData = false;
-		}
+			stickyPolicy.addPolicy(target, dataType, tempExpiryDate, constraint, action);
+		} 
 	}
 
 	/*
@@ -206,7 +204,7 @@ public class ContentHandler_SAX extends DefaultHandler {
 		return ignorableWhitespace;
 	}
 
-	public List<PKIPolicy> getStickyPolicies() {
+	public PKIPolicy getStickyPolicy() {
 		return stickyPolicy;
 	}
 

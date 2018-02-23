@@ -9,18 +9,16 @@ public class PKIPolicy {
 	private String[] trustedAuthority;
 	private Owner owner;
 	private List<Policy> policies;
-	private String encryptedText;
 
-	public PKIPolicy(String[] trustedAuthority, String encryptedText) {
+	public PKIPolicy(String[] trustedAuthority) {
 		super();
 		this.trustedAuthority = trustedAuthority;
 		this.owner = new Owner();
 		this.policies = new ArrayList<Policy>();
-		this.encryptedText = encryptedText;
 	}
 
-	public void addPolicy(String[] targets, Date validityDate, String[] constraints, String[] action) {
-		this.policies.add(new Policy(targets, validityDate, constraints, action));
+	public void addPolicy(String[] targets, String[] dataTypes, Date validityDate, String[] constraints, String[] action) {
+		this.policies.add(new Policy(targets, dataTypes, validityDate, constraints, action));
 	}
 
 	public void setOwner(String referenceName, String[] details) {
@@ -39,10 +37,6 @@ public class PKIPolicy {
 		return policies;
 	}
 
-	public String getEncryptedText() {
-		return encryptedText;
-	}
-
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -50,7 +44,7 @@ public class PKIPolicy {
 			sb.append(p.toString());
 		}
 		return "PKIPolicy [trustedAuthority=" + Arrays.toString(trustedAuthority) + "\n, owner=" + owner.toString() + "\n, policies="
-				+ sb.toString() + "\n, encryptedText=" + encryptedText + "]";
+				+ sb.toString() + "]";
 	}
 }
 
@@ -83,6 +77,7 @@ class Owner {
 
 class Policy {
 	private String[] target;
+	private String[] dataType;
 	private Date expirationDate;
 	private String[] constraint;
 	private String[] action;
@@ -90,9 +85,10 @@ class Policy {
 	protected Policy() {
 	}
 
-	protected Policy(String[] target, Date expirationDate, String[] constraint, String[] action) {
+	protected Policy(String[] target, String[] dataType, Date expirationDate, String[] constraint, String[] action) {
 		super();
 		this.target = target;
+		this.dataType = dataType;
 		this.expirationDate = expirationDate;
 		this.constraint = constraint;
 		this.action = action;
@@ -100,6 +96,10 @@ class Policy {
 
 	public String[] getTarget() {
 		return target;
+	}
+
+	public String[] getDataType() {
+		return dataType;
 	}
 
 	public Date getExpirationDate() {
