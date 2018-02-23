@@ -1,4 +1,4 @@
-#This is a *very simple* server
+# This is a *very simple* server
 ### answering the Android app.
 
 It is powered by **Apache Tomcat**.
