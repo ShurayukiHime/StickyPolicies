@@ -46,9 +46,7 @@
 	</servlet-mapping>
 
 	<!-- Welcome pages -->
-	<!-- pleonastico: tomcat "tenta" in automatico le index.html e index.jsp -->	
 	<welcome-file-list>
-		<welcome-file>test.html</welcome-file>
 		<welcome-file>home.html</welcome-file>
 	</welcome-file-list>
 		

@@ -2,7 +2,6 @@
 <stickyPolicy xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="PKIstickypolicy.xsd">
 
     <trustedAuthority>trustedAuthority1</trustedAuthority>
-    <trustedAuthority>trustedAuthority2</trustedAuthority>
 
    <owner>
         <referenceName>referenceName1</referenceName>
@@ -11,28 +10,14 @@
 
    <policy>
         <target>target1</target>
-        <target>target2</target>
-        <dataType>video</dataType>
+        <dataType>audio</dataType>
+        <dataType>picture</dataType>
         <validity>
-            <giorno>15</giorno>
-            <mese>9</mese>
-            <anno>2024</anno>
+            <day>21</day>
+            <month>3</month>
+            <year>2020</year>
         </validity>
         <constraint>constraint1</constraint>
         <action>action1</action>
-        <action>action2</action>
-    </policy>
-
-   <policy>
-        <target>target3</target>
-        <dataType>text</dataType>
-        <validity>
-            <giorno>26</giorno>
-            <mese>4</mese>
-            <anno>2026</anno>
-        </validity>
-        <constraint>constraint2</constraint>
-        <action>action3</action>
-        <action>action4</action>
     </policy>
 </stickyPolicy>

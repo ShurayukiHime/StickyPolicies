@@ -18,6 +18,8 @@ import android.widget.Toast;
 
 import com.example.giada.stickypoliciesapp.utilities.NetworkUtils;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -31,7 +33,7 @@ public class PolicyClient extends AppCompatActivity {
     private TextView mSearchResultsTextView;
 
     private String TAG = "PolicyClient";
-    private String policy = "this is a cool policy!";
+    private JSONObject postData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +59,7 @@ public class PolicyClient extends AppCompatActivity {
         URL serverURL = NetworkUtils.buildUrl(githubQuery);
         mUrlDisplayTextView.setText(serverURL.toString());
 
-        String policyfile = "/PolicyFolder/policy1.xml";
+/*        String policyfile = "/PolicyFolder/policy1.xml";
         String filePath = Environment.getExternalStorageDirectory() + policyfile;
         File f = new File(filePath);
         if (f.exists()) {
@@ -79,6 +81,16 @@ public class PolicyClient extends AppCompatActivity {
             policy = sb.toString();
         } else {
             Toast.makeText(this, "File doesn't exist :(", Toast.LENGTH_LONG);
+        }*/
+
+        postData = new JSONObject();
+        try {
+            postData.put("dataOwner", "TizioCaio");
+            postData.put("policy", "Full disclose");
+            postData.put("encoding", "sd345ggsdrUJ%%l£km3Nnk");
+        }
+        catch(Exception e){
+            e.printStackTrace();
         }
         new DepositPolicyTask().execute(serverURL);
     }
@@ -90,7 +102,8 @@ public class PolicyClient extends AppCompatActivity {
             URL searchUrl = params[0];
             String depositPolicyRequestResults = null;
             try {
-                depositPolicyRequestResults = NetworkUtils.getResponseFromHttpUrl(searchUrl, policy);
+                depositPolicyRequestResults = NetworkUtils.getResponseFromHttpUrl(searchUrl, postData.toString());
+                Log.d("PolicyClient", depositPolicyRequestResults);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -42,12 +42,12 @@ public class ContentHandler_SAX extends DefaultHandler {
 	private String[] action;
 
 	private boolean isInValidity = false;
-	private boolean isInGiorno = false;
-	private boolean isInMese = false;
-	private boolean isInAnno = false;
-	private int giorno;
-	private int mese;
-	private int anno;
+	private boolean isInDay = false;
+	private boolean isInMonth = false;
+	private boolean isInYear = false;
+	private int day;
+	private int month;
+	private int year;
 	private Date tempExpiryDate;
 
 	public void startElement(String namespaceURI, String localName, String rawName, Attributes atts) {
@@ -82,12 +82,12 @@ public class ContentHandler_SAX extends DefaultHandler {
 			dataType = new String[tempData.size()];
 			tempData.toArray(dataType);
 			tempData = new ArrayList<String>();
-		} else if (localName.equals("giorno")) {
-			isInGiorno = true;
-		} else if (localName.equals("mese")) {
-			isInMese = true;
-		} else if (localName.equals("anno")) {
-			isInAnno = true;
+		} else if (localName.equals("day")) {
+			isInDay = true;
+		} else if (localName.equals("month")) {
+			isInMonth = true;
+		} else if (localName.equals("year")) {
+			isInYear = true;
 		} else if (localName.equals("constraint")) {
 			isInConstraint = true;
 		} else if (localName.equals("action")) {
@@ -121,12 +121,12 @@ public class ContentHandler_SAX extends DefaultHandler {
 				} else if (isInDataType) {
 					tempData.add(new String(ch, start, length));
 				} else if (isInValidity) {
-					if (isInGiorno)
-						giorno = Integer.parseInt(new String(ch, start, length));
-					else if (isInMese)
-						mese = Integer.parseInt(new String(ch, start, length));
-					else if (isInAnno)
-						anno = Integer.parseInt(new String(ch, start, length));
+					if (isInDay)
+						day = Integer.parseInt(new String(ch, start, length));
+					else if (isInMonth)
+						month = Integer.parseInt(new String(ch, start, length));
+					else if (isInYear)
+						year = Integer.parseInt(new String(ch, start, length));
 				} else if (isInConstraint) {
 					tempData.add(new String(ch, start, length));
 				} else if (isInAction) {
@@ -162,15 +162,15 @@ public class ContentHandler_SAX extends DefaultHandler {
 			isInTarget = false;
 		} else if (localName.equals("dataType")) {
 			isInDataType = false;
-		} else if (localName.equals("giorno")) {
-			isInGiorno = false;
-		} else if (localName.equals("mese")) {
-			isInMese = false;
-		} else if (localName.equals("anno")) {
-			isInAnno = false;
+		} else if (localName.equals("day")) {
+			isInDay = false;
+		} else if (localName.equals("month")) {
+			isInMonth = false;
+		} else if (localName.equals("year")) {
+			isInYear = false;
 		} else if (localName.equals("validity")) {
 			isInValidity = false;
-			tempExpiryDate = new Date(anno-1900, mese-1, giorno);
+			tempExpiryDate = new Date(year-1900, month-1, day);
 		} else if (localName.equals("constraint")) {
 			isInConstraint = false;
 			constraintFlag = true;

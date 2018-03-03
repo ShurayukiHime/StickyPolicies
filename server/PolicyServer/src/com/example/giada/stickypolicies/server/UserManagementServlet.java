@@ -43,12 +43,11 @@ public class UserManagementServlet extends HttpServlet {
 		BufferedReader body = request.getReader();
 		StringBuilder sb = new StringBuilder();
 		String line;
-        do {
-            line = body.readLine();
+		while ((line = body.readLine()) != null) {
             sb.append(line).append("\n");
-        } while (line != null);
+        } 
         body.close();
-		
+        
 		PrintWriter out = response.getWriter();
 		
 		out.println("<html>");

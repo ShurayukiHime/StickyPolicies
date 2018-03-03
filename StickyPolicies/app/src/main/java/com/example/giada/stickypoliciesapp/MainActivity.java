@@ -15,7 +15,6 @@ import java.io.File;
 public class MainActivity extends AppCompatActivity {
 
     private Button mSwitchToXmlParsingButton;
-    private Button mConnectToFacebookButton;
     private Button mServerPathButton;
 
     @Override
@@ -40,18 +39,6 @@ public class MainActivity extends AppCompatActivity {
                 Class destinationActivity = XmlParserActivity.class;
                 Intent startXmlParser = new Intent(context, destinationActivity);
                 startActivity(startXmlParser);
-            }
-        });
-
-        mConnectToFacebookButton = (Button) findViewById(R.id.connect_to_facebook);
-        mConnectToFacebookButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d("MainActivity", "Facebook button Clicked!");
-                Context context = MainActivity.this;
-                Class destinationActivity = ConnectToFacebookActivity.class;
-                Intent connectToSocial = new Intent(context, destinationActivity);
-                startActivity(connectToSocial);
             }
         });
 

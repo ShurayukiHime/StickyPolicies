@@ -11,28 +11,14 @@
 
    <policy>
         <target>target1</target>
-        <dataType>position</dataType>
-        <dataType>video</dataType>
+        <target>target2</target>
+        <dataType>audio</dataType>
         <validity>
-            <giorno>22</giorno>
-            <mese>3</mese>
-            <anno>2017</anno>
+            <day>17</day>
+            <month>3</month>
+            <year>2021</year>
         </validity>
         <constraint>constraint1</constraint>
         <action>action1</action>
-    </policy>
-
-   <policy>
-        <target>target2</target>
-        <target>target3</target>
-        <dataType>video</dataType>
-        <validity>
-            <giorno>9</giorno>
-            <mese>2</mese>
-            <anno>2020</anno>
-        </validity>
-        <constraint>constraint2</constraint>
-        <action>action2</action>
-        <action>action3</action>
     </policy>
 </stickyPolicy>
