@@ -34,23 +34,29 @@ limitations under the License.
     tools:context="com.example.giada.stickypoliciesapp.PolicyClient">
 
     <Button
-        android:id="@+id/user_management_button"
+        android:id="@+id/obtain_certificate_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="User Management" />
+        android:text="Obtain CA Certificate" />
 
     <Button
-        android:id="@+id/policy_stuff_button"
+        android:id="@+id/send_pii_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Policy Stuff" />
+        android:text="@string/send_pii" />
+
+    <Button
+        android:id="@+id/access_policy_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/access_encrypted_pii" />
 
     <TextView
         android:id="@+id/tv_url_display"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Click and your URL will show up here!"
+        android:text="Queried URL"
         android:textSize="22sp" />
 
     <ScrollView
@@ -59,10 +65,10 @@ limitations under the License.
         android:layout_marginTop="16dp">
 
         <TextView
-            android:id="@+id/tv_github_search_results_json"
+            android:id="@+id/tv_search_results_json"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Make a search!"
+            android:text="Request Output"
             android:textSize="18sp" />
     </ScrollView>
 </LinearLayout>

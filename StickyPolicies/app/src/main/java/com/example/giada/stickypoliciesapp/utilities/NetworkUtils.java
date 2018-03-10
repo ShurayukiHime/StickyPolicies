@@ -18,8 +18,8 @@ package com.example.giada.stickypoliciesapp.utilities;
 import android.net.Uri;
 import android.util.Log;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,21 +27,22 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Scanner;
 
 public class NetworkUtils {
 
     final static String MY_BASE_URL_PORT =
             //"192.168.1.8:8080";
-                "10.0.2.2:8080";
+            "10.0.2.2:8080";
 
     final static String MY_SERVER_DOMAIN = "PolicyServer";
-
-    final static String USER_MGMT_PATH = "usrmgmt";
-    final static String POLICY_MGMT_PATH = "plcmgmt";
+    private static String TAG = "NetworkUtils";
 
     public static URL buildUrl(String searchQuery) {
-        /*Uri builtUri = Uri.parse(MY_BASE_URL_PORT + "/" + MY_SERVER_DOMAIN + "/" + USER_MGMT_PATH).buildUpon()
+        /*Uri builtUri = Uri.parse(MY_BASE_URL_PORT + "/" + MY_SERVER_DOMAIN + "/" + OBTAIN_CERT_PATH).buildUpon()
                 .appendQueryParameter(PARAM_QUERY, searchQuery)
                 .appendQueryParameter(PARAM_SORT, sortBy)
                 .build();*/
@@ -49,41 +50,40 @@ public class NetworkUtils {
         builder.scheme("http")
                 .encodedAuthority(MY_BASE_URL_PORT)
                 .appendPath(MY_SERVER_DOMAIN)
-                .appendPath(POLICY_MGMT_PATH);
-                //.appendPath(searchQuery);
+                //.appendPath(DATA_ACCESS_PATH);
+                .appendPath(searchQuery);
         Uri builtUri = builder.build();
 
         URL url = null;
         try {
-            String prettyString = builtUri.toString();
             url = new URL((builtUri.toString()));
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-
         return url;
     }
 
-    public static String getResponseFromHttpUrl(URL url, String postData) throws IOException {
+    public static String getResponseFromHttpUrl(URL url, String requestMethod, String postData) throws IOException {
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {
             Log.d("NetworkUtils", "Opened connection with url " + url.toString());
-            urlConnection.setRequestMethod("POST");
+            urlConnection.setRequestMethod(requestMethod);
             urlConnection.setDoOutput(true);
             urlConnection.setChunkedStreamingMode(0);
 
-            OutputStream out = urlConnection.getOutputStream();
-            BufferedWriter writer = new BufferedWriter(
-                    new OutputStreamWriter(out, "UTF-8"));
-            writer.write("PostData="+postData);
-            writer.flush();
-            writer.close();
-            out.close();
+            if (!postData.isEmpty()) {
+                OutputStream out = urlConnection.getOutputStream();
+                BufferedWriter writer = new BufferedWriter(
+                        new OutputStreamWriter(out, "UTF-8"));
+                writer.write("PostData=" + postData);
+                writer.flush();
+                writer.close();
+                out.close();
+            }
             urlConnection.connect();
             Log.d("NetworkUtils", "Message sent!");
 
             InputStream in = urlConnection.getInputStream();
-
             Scanner scanner = new Scanner(in);
             scanner.useDelimiter("\\A");
 

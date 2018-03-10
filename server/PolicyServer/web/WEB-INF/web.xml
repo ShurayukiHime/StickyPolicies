@@ -18,8 +18,8 @@
 	
     <!-- Define servlets that are included in the application -->    
     <servlet>
-		<servlet-name>UserManagementServlet</servlet-name>
-		<servlet-class>com.example.giada.stickypolicies.server.UserManagementServlet</servlet-class>
+		<servlet-name>CertificateGenerationServlet</servlet-name>
+		<servlet-class>com.example.giada.stickypolicies.server.CertificateGenerationServlet</servlet-class>
 		<init-param>
  			<param-name>paramName</param-name>
 			<param-value>paramValue</param-value>
@@ -27,13 +27,13 @@
 	</servlet>
 	<!-- Servlet mapping -->
 	<servlet-mapping>
-		<servlet-name>UserManagementServlet</servlet-name>
-		<url-pattern>/usrmgmt</url-pattern>
+		<servlet-name>CertificateGenerationServlet</servlet-name>
+		<url-pattern>/certificates</url-pattern>
 	</servlet-mapping>
 	
 	<servlet>
-		<servlet-name>PolicyManagementServlet</servlet-name>
-		<servlet-class>com.example.giada.stickypolicies.server.PolicyManagementServlet</servlet-class>
+		<servlet-name>DataAccessServlet</servlet-name>
+		<servlet-class>com.example.giada.stickypolicies.server.DataAccessServlet</servlet-class>
 		<init-param>
  			<param-name>paramName</param-name>
 			<param-value>paramValue</param-value>
@@ -41,8 +41,8 @@
 	</servlet>
 	<!-- Servlet mapping -->
 	<servlet-mapping>
-		<servlet-name>PolicyManagementServlet</servlet-name>
-		<url-pattern>/plcmgmt</url-pattern>
+		<servlet-name>DataAccessServlet</servlet-name>
+		<url-pattern>/access</url-pattern>
 	</servlet-mapping>
 
 	<!-- Welcome pages -->

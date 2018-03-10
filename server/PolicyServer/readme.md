@@ -1,4 +1,4 @@
-#This is a *very simple* server
+# This is a *very simple* server
 ### answering the Android app.
 
 It is powered by **Apache Tomcat**.
@@ -19,3 +19,8 @@ Each inner policy defines:
 - the time validity of the policy
 - one or more constraints which are to be checked by the trust authority before authorizing access
 - one or more actions which are to be taken by the trust authority before authorizing access, e.g. notify owner.
+
+## Internal structure
+This server includes two servlets for the following purposes:
+- Certificates handling: data owners' certificates are received and stored for future use, and the TA's certificate is sent to clients to encrypt data.
+- Data access: decryption and verification of signatures when asked to disclose data; check policy correctness and compliance.

@@ -8,9 +8,13 @@
       <p>
       	<h3>Welcome to Policy Server!</h3>
       	<br>
-      	Go to... <a href="plcmgmt">Policy Management</a>.
+      	<form action="certificates" method="post">
+			<input type="submit" name="action" value="obtainTAcertificate" />
+		</form>	
       	<br>
-      	Go to... <a href="usrmgmt">User Management</a>.
+      	Please send your Public Key with a POST request to <i>certificates</i>.
+      	<br>
+      	Go to... <a href="access">Ask Data Access</a>.
       </p>
 
    </body>

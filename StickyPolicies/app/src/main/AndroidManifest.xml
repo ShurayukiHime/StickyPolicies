@@ -20,7 +20,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".XmlParserActivity" />
-        <activity android:name=".PolicyClient"></activity>
+        <activity android:name=".PolicyClient" />
     </application>
 
 </manifest>

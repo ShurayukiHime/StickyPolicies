@@ -11,16 +11,17 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.XML;
 
-public class PolicyManagementServlet extends HttpServlet {
+public class DataAccessServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	public PolicyManagementServlet() {
+	public DataAccessServlet() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
 
-	/*protected void doGet(HttpServletRequest request, HttpServletResponse response)
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		// response.getWriter().append("Served
 		// at:").append(request.getContextPath());
@@ -40,15 +41,10 @@ public class PolicyManagementServlet extends HttpServlet {
 		out.println("<br/>");
 		out.println(
 				"Where K is the one-time-use symmetric key, TA is me, User is the data owner and PII is the personal data.");
-		out.println("<hr/>");
-		out.println("<br/>");
-		out.println(
-				"<form method=\"post\"><input type=\"submit\" name=\"post\" value=\"Reach me via an HTTP POST REQUEST\"/></form>");
-
 		out.println("</body>");
 		out.println("</html>");
-	}*/
-
+	}
+	
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		BufferedReader body = request.getReader();
@@ -82,6 +78,14 @@ public class PolicyManagementServlet extends HttpServlet {
 		
 		if (requestData != null) {
 			out.println(requestData.toString());
+			out.println("");
+			try {
+				out.println(XML.toString(requestData));
+			} catch (JSONException e) {
+				System.out.println(e.getMessage());
+		    	e.printStackTrace();
+		    	out.println("Oooops! JSONException: " + e.getMessage());
+			}
 		} else {
 			out.println("Oooops! Something went wrong!");
 		}

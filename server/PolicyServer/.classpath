@@ -26,5 +26,7 @@
 	<classpathentry kind="lib" path="D:/Giada/Documents/GitHub/stickypolicies/server/PolicyServer/web/WEB-INF/lib/junit4_4.3.1.jar"/>
 	<classpathentry kind="lib" path="D:/Giada/Documents/GitHub/stickypolicies/server/PolicyServer/web/WEB-INF/lib/servlet-api.jar"/>
 	<classpathentry kind="lib" path="D:/Giada/Documents/GitHub/stickypolicies/server/PolicyServer/web/WEB-INF/lib/soap.jar"/>
+	<classpathentry kind="lib" path="D:/Giada/Documents/GitHub/stickypolicies/server/PolicyServer/lib/bcpkix-jdk15on-159.jar"/>
+	<classpathentry kind="lib" path="D:/Giada/Documents/GitHub/stickypolicies/server/PolicyServer/lib/bcprov-jdk15on-1.59.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
