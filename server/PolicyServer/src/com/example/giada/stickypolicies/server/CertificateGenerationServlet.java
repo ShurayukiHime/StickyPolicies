@@ -5,9 +5,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
 import javax.servlet.ServletException;
@@ -17,8 +14,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.example.giada.stickypolicies.model.Certificates;
 
@@ -29,29 +24,32 @@ public class CertificateGenerationServlet extends HttpServlet {
     
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		PrintWriter out = response.getWriter();
+		out.println("<html>");
+		out.println("<head>");
+		out.println("<title>I am a Trusted Authority</title>");
+		out.println("<link rel=\"stylesheet\" href=\"styles/default.css\" type=\"text/css\"></link>");
+		out.println("</head>");
+		out.println("<body>");
 		String action = request.getParameter("action");
-		if(action == null)
+		if(action == null) {
 			action = "";
+			out.println("pwned. 2");
+		}
 		if(action.equals("obtainTAcertificate")) { 
 			try {
 				X509Certificate taCert = Certificates.getCertificate();
-				//response.getOutputStream().write(taCert.getEncoded());
-				// sends the certificate with DER format.
-				// PEM was preferred because the certificate is sent as a string and it is
-				// easier to receive it client - side
-				StringWriter sw = new StringWriter();
-				JcaPEMWriter pw = new JcaPEMWriter(sw);
-				pw.writeObject(taCert);
-				pw.flush();
-				String pemData = sw.toString();
-				out.println(pemData);
-				pw.close();
+				out.println(Certificates.getPEMCertificate(taCert));
+				//out.println("pwned. again.");
+				//response.setStatus(HttpServletResponse.SC_OK);
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 		    	e.printStackTrace();
-		    	out.println("Oooops! Exception in sending the certificate: " + e.getMessage());;
+		    	out.println("Oooops! Exception in sending the certificate: " + e.getMessage());
+		    	response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			}
 		}
+		out.println("</body>");
+		out.println("</html>");
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -65,6 +63,7 @@ public class CertificateGenerationServlet extends HttpServlet {
         
         PEMParser pr = new PEMParser(new StringReader(line));
         dataOwnerCert = (X509Certificate) pr.readObject();
+        pr.close();
         
 		response.setStatus(HttpServletResponse.SC_OK);
 	}

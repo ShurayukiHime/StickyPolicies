@@ -28,6 +28,7 @@ import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
+import javax.security.auth.x500.X500Principal;
 import javax.xml.bind.DatatypeConverter;
 
 /**
@@ -83,7 +84,6 @@ public class AsymmetricCryptoUtilities {
         if (keyPair == null)
             generateKeys();
 
-        X500Name dnName = new X500Name(CNUser);
         // Using the current timestamp as the certificate serial number
         BigInteger certSerialNumber = new BigInteger(Long.toString(System.currentTimeMillis()));
         Date validityBeginDate = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000); // yesterday
@@ -92,7 +92,7 @@ public class AsymmetricCryptoUtilities {
 
         ContentSigner contentSigner = new JcaContentSignerBuilder(signatureAlgorithm).setProvider(BC).build(keyPair.getPrivate());
 
-        JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(dnName, certSerialNumber, validityBeginDate, validityEndDate, dnName, keyPair.getPublic());
+        JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(new X500Principal("CN="+CNUser), certSerialNumber, validityBeginDate, validityEndDate, new X500Principal("CN="+CNUser), keyPair.getPublic());
 
         // Basic Constraints
         BasicConstraints basicConstraints = new BasicConstraints(true); // <-- true for CA, false for EndEntity
