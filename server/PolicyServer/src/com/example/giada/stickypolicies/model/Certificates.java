@@ -52,14 +52,10 @@ public class Certificates {
 		// Using the current timestamp as the certificate serial number
 		BigInteger certSerialNumber = new BigInteger(Long.toString(System.currentTimeMillis()));
 		Date validityBeginDate = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000); // yesterday
-		Date validityEndDate = new Date(System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000); // in
-																									// 1
-																									// year
-		String signatureAlgorithm = "SHA256WithRSA"; // <-- Use appropriate
-														// signature algorithm
-														// based on your keyPair
-														// algorithm.
-
+		Date validityEndDate = new Date(System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000); 
+			//in one year
+		String signatureAlgorithm = "SHA256WithRSA"; 
+			//use appropriate signature alg based on your key algorithm
 		ContentSigner contentSigner = new JcaContentSignerBuilder(signatureAlgorithm).setProvider(BC)
 				.build(taKeys.getPrivate());
 
@@ -68,20 +64,9 @@ public class Certificates {
 				new X500Principal("CN=" + CNTrustAuthority), taKeys.getPublic());
 
 		// Basic Constraints
-		BasicConstraints basicConstraints = new BasicConstraints(true); // <--
-																		// true
-																		// for
-																		// CA,
-																		// false
-																		// for
-																		// EndEntity
-		certBuilder.addExtension(new ASN1ObjectIdentifier("2.5.29.19"), true, basicConstraints); // Basic
-																									// Constraints
-																									// is
-																									// usually
-																									// marked
-																									// as
-																									// critical.
+		BasicConstraints basicConstraints = new BasicConstraints(true);
+		// true for CA, false for end entity
+		certBuilder.addExtension(new ASN1ObjectIdentifier("2.5.29.19"), true, basicConstraints); 
 
 		taCertificate = new JcaX509CertificateConverter().setProvider(BC)
 				.getCertificate(certBuilder.build(contentSigner));

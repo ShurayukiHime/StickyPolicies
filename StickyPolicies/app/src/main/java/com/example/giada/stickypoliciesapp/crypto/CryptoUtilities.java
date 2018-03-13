@@ -1,5 +1,7 @@
 package com.example.giada.stickypoliciesapp.crypto;
 
+import android.util.Log;
+
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -15,7 +17,10 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.security.DigestException;
+import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
@@ -28,6 +33,13 @@ import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 import javax.xml.bind.DatatypeConverter;
 
@@ -35,7 +47,7 @@ import javax.xml.bind.DatatypeConverter;
  * Created by Giada on 06/03/2018.
  */
 
-public class AsymmetricCryptoUtilities {
+public class CryptoUtilities {
 
     private static KeyPair keyPair;
     private final static String CNUser = "Alice";
@@ -45,6 +57,9 @@ public class AsymmetricCryptoUtilities {
     private static String encryptionAlgorithm = "RSA";
     private static String securityProvider = "BC";
     private static String signatureAlgorithm = "MD5WithRSA";
+    private static String symmetricEncrAlgorithm = "AES";
+    private static String digestAlgorithm = "SHA-256";
+    private static String TAG = "CryptoUtilities";
 
     public static KeyPair getKeyPair() {
         //maybe this is insecure?
@@ -95,7 +110,7 @@ public class AsymmetricCryptoUtilities {
         JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(new X500Principal("CN="+CNUser), certSerialNumber, validityBeginDate, validityEndDate, new X500Principal("CN="+CNUser), keyPair.getPublic());
 
         // Basic Constraints
-        BasicConstraints basicConstraints = new BasicConstraints(true); // <-- true for CA, false for EndEntity
+        BasicConstraints basicConstraints = new BasicConstraints(false); // <-- true for CA, false for EndEntity
         certBuilder.addExtension(new ASN1ObjectIdentifier("2.5.29.19"), true, basicConstraints); // Basic Constraints is usually marked as critical.
 
         certificate = new JcaX509CertificateConverter().setProvider(BC).getCertificate(certBuilder.build(contentSigner));
@@ -107,25 +122,23 @@ public class AsymmetricCryptoUtilities {
         return certificate;
     }
 
-    public String getDigitalSignature(String text) throws SignatureException {
+    public static byte[] sign (byte[] text) throws SignatureException {
         try {
-            // text to bytes
-            byte[] data = text.getBytes("UTF8");
-
             // signature
             Signature sig = Signature.getInstance(signatureAlgorithm);
             sig.initSign(keyPair.getPrivate());
-            sig.update(data);
+            sig.update(text);
             byte[] signatureBytes = sig.sign();
 
-            return javax.xml.bind.DatatypeConverter.printBase64Binary(signatureBytes);
+            //return javax.xml.bind.DatatypeConverter.printBase64Binary(signatureBytes);
+            return signatureBytes;
         } catch (Exception e) {
             e.printStackTrace();
             throw new SignatureException(e.getMessage());
         }
     }
 
-    public static boolean verifySignature(String signature, String original) {
+    public static boolean verify(String signature, String original) {
         try {
             // text to bytes
             byte[] originalBytes = original.getBytes("UTF8");
@@ -144,14 +157,81 @@ public class AsymmetricCryptoUtilities {
         }
     }
 
-    public static String calculateDigest(String text) throws DigestException {
+    public static byte[] encryptAsymmetric (Key publicKey, byte[] plaintext) {
+        byte[] encodedBytes = null;
         try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update(text.getBytes("UTF-8"));
-            byte[] messageDigest = md.digest();
-            return DatatypeConverter.printHexBinary(messageDigest);
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException cnse) {
+            Cipher c = Cipher.getInstance(encryptionAlgorithm);
+            c.init(Cipher.ENCRYPT_MODE, publicKey);
+            encodedBytes = c.doFinal(plaintext);
+        } catch (Exception e) {
+            Log.d(TAG, "Asymmetric encryption error: " + e.getMessage());
+        }
+        return encodedBytes;
+    }
+
+    public static byte[] decryptAsymmetric (Key privateKey, byte[] encodedBytes) {
+        byte[] decodedBytes = null;
+        try {
+            Cipher c = Cipher.getInstance(encryptionAlgorithm);
+            c.init(Cipher.DECRYPT_MODE, privateKey);
+            decodedBytes = c.doFinal(encodedBytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.d(TAG, "Asymmetric decryption error: " + e.getMessage());
+        }
+        return decodedBytes;
+    }
+
+    public static byte[] calculateDigest(byte[] text) throws DigestException {
+        try {
+            MessageDigest md = MessageDigest.getInstance(digestAlgorithm);
+            md.update(text);
+            return md.digest();
+            //return DatatypeConverter.printHexBinary(messageDigest);
+        } catch (NoSuchAlgorithmException cnse) {
             throw new DigestException("Couldn't make digest of partial content " + cnse.getMessage());
         }
+    }
+
+    public static byte[] generateSymmetricRandomKey() {
+        KeyGenerator keyGen = null;
+        try {
+            keyGen = KeyGenerator.getInstance(symmetricEncrAlgorithm);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Error in generating the symmetric random key: " + e.getMessage());
+        }
+        keyGen.init(256); // for example
+        SecretKey secretKey = keyGen.generateKey();
+        return secretKey.getEncoded();
+    }
+
+    public static byte[] encryptSymmetric(byte[] encodedSymmKey, byte[] clearText) {
+        SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
+        byte[] encryptedText = new byte[0];
+        try {
+            Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);
+            cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
+            encryptedText = cipher.doFinal(clearText);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
+        return encryptedText;
+    }
+
+    public static byte[] decryptSymmetric(byte[] encodedSymmKey, byte[] encryptedText) throws Exception {
+        SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
+        Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);
+        cipher.init(Cipher.DECRYPT_MODE, skeySpec);
+        byte[] decrypted = cipher.doFinal(encryptedText);
+        return decrypted;
     }
 }

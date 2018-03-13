@@ -18,8 +18,11 @@ package com.example.giada.stickypoliciesapp.utilities;
 import android.net.Uri;
 import android.util.Log;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,9 +30,6 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.Scanner;
 
 public class NetworkUtils {
@@ -41,17 +41,24 @@ public class NetworkUtils {
     final static String MY_SERVER_DOMAIN = "PolicyServer";
     private static String TAG = "NetworkUtils";
 
-    public static URL buildUrl(String searchQuery) {
+    public static URL buildUrl(String targetUri, String queryKeyParam, String queryValueParam) {
         /*Uri builtUri = Uri.parse(MY_BASE_URL_PORT + "/" + MY_SERVER_DOMAIN + "/" + OBTAIN_CERT_PATH).buildUpon()
                 .appendQueryParameter(PARAM_QUERY, searchQuery)
                 .appendQueryParameter(PARAM_SORT, sortBy)
                 .build();*/
         Uri.Builder builder = new Uri.Builder();
-        builder.scheme("http")
-                .encodedAuthority(MY_BASE_URL_PORT)
-                .appendPath(MY_SERVER_DOMAIN)
-                //.appendPath(DATA_ACCESS_PATH);
-                .appendPath(searchQuery);
+        if (queryKeyParam.isEmpty()) {
+            builder.scheme("http")
+                    .encodedAuthority(MY_BASE_URL_PORT)
+                    .appendPath(MY_SERVER_DOMAIN)
+                    .appendPath(targetUri);
+        } else {
+            builder.scheme("http")
+                    .encodedAuthority(MY_BASE_URL_PORT)
+                    .appendPath(MY_SERVER_DOMAIN)
+                    .appendPath(targetUri)
+                    .appendQueryParameter(queryKeyParam, queryValueParam);
+        }
         Uri builtUri = builder.build();
 
         URL url = null;
@@ -68,10 +75,10 @@ public class NetworkUtils {
         try {
             Log.d("NetworkUtils", "Opened connection with url " + url.toString());
             urlConnection.setRequestMethod(requestMethod);
-            urlConnection.setDoOutput(true);
             urlConnection.setChunkedStreamingMode(0);
 
             if (!postData.isEmpty()) {
+                urlConnection.setDoOutput(true);
                 OutputStream out = urlConnection.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(
                         new OutputStreamWriter(out, "UTF-8"));
@@ -83,6 +90,8 @@ public class NetworkUtils {
             urlConnection.connect();
             Log.d("NetworkUtils", "Message sent!");
 
+            if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK)
+                Log.d(TAG, "Response code: 200!");
             InputStream in = urlConnection.getInputStream();
             Scanner scanner = new Scanner(in);
             scanner.useDelimiter("\\A");
@@ -98,5 +107,12 @@ public class NetworkUtils {
         } finally {
             urlConnection.disconnect();
         }
+    }
+
+    public static String extractBody (String htmlDocument) {
+        String body = null;
+        Document doc = Jsoup.parse(htmlDocument);
+        body = doc.body().text();
+        return body;
     }
 }

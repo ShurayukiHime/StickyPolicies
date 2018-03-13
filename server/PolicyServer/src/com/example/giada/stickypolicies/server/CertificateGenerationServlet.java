@@ -24,32 +24,34 @@ public class CertificateGenerationServlet extends HttpServlet {
     
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		PrintWriter out = response.getWriter();
+		String action = request.getParameter("action");
 		out.println("<html>");
 		out.println("<head>");
 		out.println("<title>I am a Trusted Authority</title>");
 		out.println("<link rel=\"stylesheet\" href=\"styles/default.css\" type=\"text/css\"></link>");
 		out.println("</head>");
 		out.println("<body>");
-		String action = request.getParameter("action");
 		if(action == null) {
 			action = "";
-			out.println("pwned. 2");
+			out.println("pwned.");
 		}
 		if(action.equals("obtainTAcertificate")) { 
 			try {
 				X509Certificate taCert = Certificates.getCertificate();
-				out.println(Certificates.getPEMCertificate(taCert));
-				//out.println("pwned. again.");
-				//response.setStatus(HttpServletResponse.SC_OK);
+				String pemCert = Certificates.getPEMCertificate(taCert);
+				System.out.println(pemCert);
+				out.println(pemCert + "");
+				//out.println("end of file!");
+				response.setStatus(HttpServletResponse.SC_OK);
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 		    	e.printStackTrace();
 		    	out.println("Oooops! Exception in sending the certificate: " + e.getMessage());
 		    	response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			}
+			out.println("</body>");
+			out.println("</html>");
 		}
-		out.println("</body>");
-		out.println("</html>");
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
