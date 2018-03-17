@@ -40,4 +40,6 @@ dependencies {
     compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.2.3'
     // jsoup HTML parser library @ https://jsoup.org/
     compile 'org.jsoup:jsoup:1.11.2'
+    // https://mvnrepository.com/artifact/org.json/json
+    compile group: 'org.json', name: 'json', version: '20180130'
 }

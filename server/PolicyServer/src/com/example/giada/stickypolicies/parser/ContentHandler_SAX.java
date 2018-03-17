@@ -1,5 +1,6 @@
 package com.example.giada.stickypolicies.parser;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -27,6 +28,9 @@ public class ContentHandler_SAX extends DefaultHandler {
 
 	private boolean isInOwnersDetails = false;
 	private String[] ownersDetails;
+	
+	private boolean isInSerialNumber = false;
+	private BigInteger serialNumber;
 
 	private boolean isInTarget = false;
 	private String[] target;
@@ -58,8 +62,6 @@ public class ContentHandler_SAX extends DefaultHandler {
 		} else if (localName.equals("owner")) {
 			isInOwner = true;
 			if (!tempData.isEmpty()) {
-				// inizializziamo pkipolicy qui perchè ci piacciono le cose fatte
-				// male *thumbs up*
 				trustedAuthority = new String[tempData.size()];
 				tempData.toArray(trustedAuthority);
 				tempData = new ArrayList<String>();
@@ -68,6 +70,8 @@ public class ContentHandler_SAX extends DefaultHandler {
 			isInReferenceName = true;
 		} else if (localName.equals("ownersDetails")) {
 			isInOwnersDetails = true;
+		} else if (localName.equals("certificateSerialNumber")) {
+			isInSerialNumber = true;
 		} else if (localName.equals("policy")) {
 			isInPolicy = true;
 		} else if (localName.equals("target")) {
@@ -114,6 +118,8 @@ public class ContentHandler_SAX extends DefaultHandler {
 					referenceName = new String(ch, start, length);
 				} else if (isInOwnersDetails) {
 					tempData.add(new String(ch, start, length));
+				} else if (isInSerialNumber) {
+					serialNumber = new BigInteger(new String(ch, start, length));
 				}
 			} else if (isInPolicy) {
 				if (isInTarget) {
@@ -150,14 +156,16 @@ public class ContentHandler_SAX extends DefaultHandler {
 			isInReferenceName = false;
 		} else if (localName.equals("ownersDetails")) {
 			isInOwnersDetails = false;
-		} else if (localName.equals("owner")) {
-			isInOwner = false;
+		} else if (localName.equals("certificateSerialNumber")) {
+			isInSerialNumber = false;
 			ownersDetails = new String[tempData.size()];
 			tempData.toArray(ownersDetails);
 			tempData = new ArrayList<String>();
+		} else if (localName.equals("owner")) {
+			isInOwner = false;
 			
 			stickyPolicy = new PKIPolicy(trustedAuthority);
-			stickyPolicy.setOwner(referenceName, ownersDetails);
+			stickyPolicy.setOwner(referenceName, ownersDetails, serialNumber);
 		} else if (localName.equals("target")) {
 			isInTarget = false;
 		} else if (localName.equals("dataType")) {

@@ -3,15 +3,23 @@ package com.example.giada.stickypolicies.model;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.security.DigestException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -23,7 +31,7 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
-public class Certificates {
+public class CryptoUtilities {
 	/**
 	 * Generate a self signed X509 certificate with Bouncy Castle.
 	 */
@@ -33,6 +41,11 @@ public class Certificates {
 	private static String encryptionAlgorithm = "RSA";
 	private static KeyPair taKeys;
 	private static X509Certificate taCertificate;
+	
+    private static String securityProvider = "BC";
+    private static String signatureAlgorithm = "MD5WithRSA";
+    private static String symmetricEncrAlgorithm = "AES";
+    private static String digestAlgorithm = "SHA-256";
 
 	public static KeyPair getKeys() throws NoSuchAlgorithmException, NoSuchProviderException {
 		if (taKeys == null) {
@@ -89,4 +102,79 @@ public class Certificates {
 		pw.close();
 		return pemData;
 	}
+
+	public static byte[] calculateDigest(byte[] text) throws DigestException {
+        try {
+            MessageDigest md = MessageDigest.getInstance(digestAlgorithm);
+            md.update(text);
+            return md.digest();
+            //return DatatypeConverter.printHexBinary(messageDigest);
+        } catch (NoSuchAlgorithmException cnse) {
+            throw new DigestException("Couldn't make digest of partial content " + cnse.getMessage());
+        }
+    }
+	
+	public static int getDigestSize() {
+		MessageDigest md = null;
+		try {
+			md = MessageDigest.getInstance(digestAlgorithm);
+		} catch (NoSuchAlgorithmException e) {
+			System.out.println("Couldn't instantiate digest.");
+			e.printStackTrace();
+		}
+		return md.getDigestLength();
+	}
+
+	public static byte[] sign (byte[] text) throws SignatureException {
+        try {
+            // signature
+            Signature sig = Signature.getInstance(signatureAlgorithm);
+            sig.initSign(taKeys.getPrivate());
+            sig.update(text);
+            byte[] signatureBytes = sig.sign();
+
+            //return javax.xml.bind.DatatypeConverter.printBase64Binary(signatureBytes);
+            return signatureBytes;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new SignatureException(e.getMessage());
+        }
+    }
+
+	public static boolean verify(PublicKey pubKey, byte[] allegedSignature, byte[] textToVerify) {
+        try {
+            Signature sig = Signature.getInstance(signatureAlgorithm);
+            sig.initVerify(pubKey);
+            sig.update(textToVerify);
+
+            return sig.verify(allegedSignature);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+	public static byte[] encryptAsymmetric (PublicKey publicKey, byte[] plaintext) {
+        byte[] encodedBytes = null;
+        try {
+            Cipher c = Cipher.getInstance(encryptionAlgorithm);
+            c.init(Cipher.ENCRYPT_MODE, publicKey);
+            encodedBytes = c.doFinal(plaintext);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return encodedBytes;
+    }
+
+	public static byte[] decryptAsymmetric (PrivateKey privateKey, byte[] encodedBytes) {
+        byte[] decodedBytes = null;
+        try {
+            Cipher c = Cipher.getInstance(encryptionAlgorithm);
+            c.init(Cipher.DECRYPT_MODE, privateKey);
+            decodedBytes = c.doFinal(encodedBytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return decodedBytes;
+    }
 }

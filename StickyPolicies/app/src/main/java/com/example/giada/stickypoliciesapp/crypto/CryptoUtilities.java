@@ -2,22 +2,14 @@ package com.example.giada.stickypoliciesapp.crypto;
 
 import android.util.Log;
 
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.security.DigestException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -26,7 +18,6 @@ import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -41,7 +32,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
-import javax.xml.bind.DatatypeConverter;
 
 /**
  * Created by Giada on 06/03/2018.
@@ -53,7 +43,6 @@ public class CryptoUtilities {
     private final static String CNUser = "Alice";
     private static final String BC = org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME;
     private static X509Certificate certificate;
-    private static byte[] publicKeyPKCS1;
     private static String encryptionAlgorithm = "RSA";
     private static String securityProvider = "BC";
     private static String signatureAlgorithm = "MD5WithRSA";
@@ -68,12 +57,12 @@ public class CryptoUtilities {
         return keyPair;
     }
 
-    public static void generateKeys() throws SecurityException {
+    private static void generateKeys() throws SecurityException {
         try {
             KeyPairGenerator keygen = KeyPairGenerator.getInstance(encryptionAlgorithm, securityProvider);
             keygen.initialize(1024);
             keyPair = keygen.generateKeyPair();
-            PrivateKey priv = keyPair.getPrivate();
+            /*PrivateKey priv = keyPair.getPrivate();
             PublicKey pub = keyPair.getPublic();
             byte[] privBytes = priv.getEncoded();
             byte[] pubBytes = pub.getEncoded();
@@ -88,8 +77,8 @@ public class CryptoUtilities {
             // encode public in PKCS1 if needed
             SubjectPublicKeyInfo spkInfo = SubjectPublicKeyInfo.getInstance(pubBytes);
             ASN1Primitive prubPrimitive = spkInfo.parsePublicKey();
-            publicKeyPKCS1 = prubPrimitive.getEncoded();
-        } catch (NoSuchAlgorithmException | NoSuchProviderException | IOException e) {
+            publicKeyPKCS1 = prubPrimitive.getEncoded();*/
+        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
             e.printStackTrace();
             throw new SecurityException(e.getMessage());
         }
@@ -138,19 +127,13 @@ public class CryptoUtilities {
         }
     }
 
-    public static boolean verify(String signature, String original) {
+    public static boolean verify(PublicKey pubKey, byte[] trueSignature, byte[] textToVerify) {
         try {
-            // text to bytes
-            byte[] originalBytes = original.getBytes("UTF8");
-
-            //signature to bytes
-            byte[] signatureBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(signature);
-
             Signature sig = Signature.getInstance(signatureAlgorithm);
-            sig.initVerify(keyPair.getPublic());
-            sig.update(originalBytes);
+            sig.initVerify(pubKey);
+            sig.update(textToVerify);
 
-            return sig.verify(signatureBytes);
+            return sig.verify(trueSignature);
         } catch (Exception e) {
             e.printStackTrace();
             return false;

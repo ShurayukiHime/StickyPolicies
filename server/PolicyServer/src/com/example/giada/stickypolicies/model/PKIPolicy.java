@@ -1,5 +1,6 @@
 package com.example.giada.stickypolicies.model;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -21,8 +22,8 @@ public class PKIPolicy {
 		this.policies.add(new Policy(targets, dataTypes, validityDate, constraints, action));
 	}
 
-	public void setOwner(String referenceName, String[] details) {
-		this.owner = new Owner(referenceName, details);
+	public void setOwner(String referenceName, String[] details, BigInteger certificateSN) {
+		this.owner = new Owner(referenceName, details, certificateSN);
 	}
 
 	public String[] getTrustedAuthority() {
@@ -43,35 +44,8 @@ public class PKIPolicy {
 		for (Policy p : policies) {
 			sb.append(p.toString());
 		}
-		return "PKIPolicy [trustedAuthority=" + Arrays.toString(trustedAuthority) + "\n, owner=" + owner.toString() + "\n, policies="
+		return "PKIPolicy [trustedAuthority=" + Arrays.toString(trustedAuthority) + ",\nowner=\n" + owner.toString() + "\npolicies=\n"
 				+ sb.toString() + "]";
-	}
-}
-
-class Owner {
-	private String referenceName;
-	private String[] ownersDetails;
-
-	protected Owner() {
-	}
-
-	public Owner(String referenceName, String[] ownersDetails) {
-		super();
-		this.referenceName = referenceName;
-		this.ownersDetails = ownersDetails;
-	}
-
-	public String getReferenceName() {
-		return referenceName;
-	}
-
-	public String[] getOwnersDetails() {
-		return ownersDetails;
-	}
-
-	@Override
-	public String toString() {
-		return "Owner [referenceName=" + referenceName + "\n, ownersDetails=" + Arrays.toString(ownersDetails) + "]\n";
 	}
 }
 
@@ -116,7 +90,7 @@ class Policy {
 
 	@Override
 	public String toString() {
-		return "Policy [target=" + Arrays.toString(target) + "\n, expirationDate=" + expirationDate + "\n, constraint="
-				+ Arrays.toString(constraint) + "\n, action=" + Arrays.toString(action) + "]\n";
+		return "Policy [target=" + Arrays.toString(target) + ",\n expirationDate=" + expirationDate + ",\n constraint="
+				+ Arrays.toString(constraint) + ",\n action=" + Arrays.toString(action) + "]\n";
 	}
 }

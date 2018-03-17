@@ -4,30 +4,39 @@ package com.example.giada.stickypoliciesapp;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.giada.stickypoliciesapp.crypto.CryptoUtilities;
 import com.example.giada.stickypoliciesapp.utilities.NetworkUtils;
 
-import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.json.JSONObject;
+import org.json.XML;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.StringReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.DigestException;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 
 public class PolicyClient extends AppCompatActivity {
 
@@ -38,13 +47,16 @@ public class PolicyClient extends AppCompatActivity {
     private Button mAccessPolicyButton;
 
     private String TAG = "PolicyClient";
-    private JSONObject postData;
 
     final static String OBTAIN_CERT_PATH = "certificates";
     final static String DATA_ACCESS_PATH = "access";
-    final static String DATA_SHARE_PATH = "plcmgmt";
+    final static String textPlainContentType = "text/plain; charset=utf-8";
+    final static String applicationJsonContentType = "application/json; charset=utf-8";
+    private String filename = "encodedDataAndPolicy";
+
 
     private X509Certificate taCertificate;
+    private String pii = "this is some very personal data!";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,13 +96,30 @@ public class PolicyClient extends AppCompatActivity {
     }
 
     private void accessEncryptedData() {
-        Log.d(TAG, "This is the access data function!");
         URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "","");
         mUrlDisplayTextView.setText(serverURL.toString());
 
-        //do something here
-
         // 1) separate encrypted PII from the rest
+        FileInputStream fileInputStream = null;
+        try {
+            fileInputStream = this.getApplicationContext().openFileInput(filename);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Log.d(TAG, "File not found!");
+        }
+        InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try {
+            int read = inputStreamReader.read();
+            while (read != -1) {
+                byteArrayOutputStream.write(read);
+                read = inputStreamReader.read();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Error when reading the encrypted data from the stream");
+        }
+
         // 2) contact TA and send stuff
         // 3) obtain key
         // 4) decryptSymmetric & profit
@@ -99,82 +128,97 @@ public class PolicyClient extends AppCompatActivity {
     }
 
     private void shareEncryptedData() {
-        Log.d(TAG, "This is the share data function!");
-        URL serverURL = NetworkUtils.buildUrl(DATA_SHARE_PATH, "","" );
-        mUrlDisplayTextView.setText(serverURL.toString());
+        // 1) retrieve policy
+        String fileName = "policy1";
+        String policy = null;
+        InputStream ins = getResources().openRawResource(
+                getResources().getIdentifier(fileName, "raw", getPackageName()));
+        Scanner scanner = new Scanner(ins);
+        scanner.useDelimiter("\\A");
+        boolean hasInput = scanner.hasNext();
+        if (hasInput)
+            policy = scanner.next();
+        else
+            Log.d(TAG, "Empty file");
+        try {
+            ins.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Error closing input stream: " + e.getMessage());
+        }
 
-         // 1) retrieve policy
         // 2) generate symmetric disposable encryption key
         byte[] encodedSymmetricKey = CryptoUtilities.generateSymmetricRandomKey();
-        String supposeThisIsAPolicy = "Heeeeeeyyyyy";
-        // 3) encryptSymmetric policy
-        byte[] encodedPolicy = CryptoUtilities.encryptSymmetric(encodedSymmetricKey, supposeThisIsAPolicy.getBytes(Charset.forName("UTF-8")));
+        // 3) encrypt PII
+        byte[] encryptedPii = CryptoUtilities.encryptSymmetric(encodedSymmetricKey, pii.getBytes(Charset.forName("UTF-8")));
         // 4) hash policy
         byte[] policyDigest = new byte[0];
         try {
-            policyDigest = CryptoUtilities.calculateDigest(supposeThisIsAPolicy.getBytes(Charset.forName("UTF-8")));
+            policyDigest = CryptoUtilities.calculateDigest(policy.getBytes(Charset.forName("UTF-8")));
         } catch (DigestException e) {
             e.printStackTrace();
             Log.d(TAG, "Error calculating policy digest: " + e.getMessage());
         }
-        // 5) concatenate policy and  digest, sign
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+        // 5) concatenate policy and  digest, encrypt with PubTa
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream( );
         try {
-            outputStream.write(supposeThisIsAPolicy.getBytes(Charset.forName("UTF-8")));
-            outputStream.write(policyDigest);
+            byteArrayOutputStream.write(encodedSymmetricKey);
+            byteArrayOutputStream.write(policyDigest);
         } catch (IOException e) {
             e.printStackTrace();
             Log.d(TAG, "Error in concatenating policy and digest: " + e.getMessage());
         }
-        byte[] signedPolicyAndDigest = new byte[0];
+        Key publicKey = null;
+        if(taCertificate == null) {
+            Toast.makeText(this.getApplicationContext(), "Please wait... Cryptography is working for you!", Toast.LENGTH_LONG);
+            URL serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "action", "obtainTAcertificate");
+            mUrlDisplayTextView.setText(serverURL.toString());
+            X509Certificate certificate = null;
+            try {
+                certificate = new GetTrustedAuthorityCertificateTask().execute(serverURL).get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
+            }
+            publicKey = certificate.getPublicKey();
+        } else
+            publicKey = taCertificate.getPublicKey();
+        byte[] keyAndHashEncrypted = CryptoUtilities.encryptAsymmetric(publicKey, byteArrayOutputStream.toByteArray());
+
+        //verify if keys have been generated:
+        CryptoUtilities.getKeyPair();
+        // 6) sign
+        byte[] signedEncrPolicyAndHash = new byte[0];
         try {
-            signedPolicyAndDigest = CryptoUtilities.sign(outputStream.toByteArray());
+            signedEncrPolicyAndHash = CryptoUtilities.sign(keyAndHashEncrypted);
         } catch (SignatureException e) {
             e.printStackTrace();
             Log.d(TAG, "Error when signing data: " + e.getMessage());
         }
-        // 6) encryptSymmetric with TA's key
-        Key publicKey = taCertificate.getPublicKey();
-        byte[] encryptedSignedMessage = CryptoUtilities.encryptAsymmetric(publicKey, signedPolicyAndDigest);
+        try {
+            byteArrayOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Error when closing byte array output stream: " + e.getMessage());
+        }
 
         // save or share somewhere somehow
-
-
-        /*        String policyfile = "/PolicyFolder/policy1.xml";
-        String filePath = Environment.getExternalStorageDirectory() + policyfile;
-        File f = new File(filePath);
-        if (f.exists()) {
-            StringBuilder sb = new StringBuilder();
-            try {
-                BufferedReader br = new BufferedReader(new FileReader(f));
-                String line;
-
-                while ((line = br.readLine()) != null) {
-                    sb.append(line);
-                    sb.append('\n');
-                }
-                br.close();
-            }
-            catch (IOException e) {
-                //You'll need to add proper error handling here
-                Log.d(TAG, e.getLocalizedMessage());
-            }
-            policy = sb.toString();
-        } else {
-            Toast.makeText(this, "File doesn't exist :(", Toast.LENGTH_LONG);
-        }*/
-
-        postData = new JSONObject();
+        JSONObject postData = new JSONObject();
         try {
-            postData.put("dataOwner", "TizioCaio");
-            postData.put("policy", "Full disclose");
-            postData.put("encoding", "sd345ggsdrUJ%%l£km3Nnk");
+            postData.put("policy", XML.toJSONObject(policy).toString());
+            postData.put("taEncryption", Base64.encodeToString(keyAndHashEncrypted, Base64.URL_SAFE));
+            postData.put("ownerSignature", Base64.encodeToString(signedEncrPolicyAndHash, Base64.URL_SAFE));
+            postData.put("encryptedPii", Base64.encodeToString(encryptedPii, Base64.URL_SAFE));
         }
         catch(Exception e){
             e.printStackTrace();
         }
-
-        new GetTrustedAuthorityCertificateTask().execute(serverURL);
+        URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "", "");
+        mUrlDisplayTextView.setText(serverURL.toString());
+        new SendEncryptedDataTask(postData.toString()).execute(serverURL);
     }
 
     private void certificateRequest() {
@@ -185,6 +229,25 @@ public class PolicyClient extends AppCompatActivity {
         serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "", "");
         mUrlDisplayTextView.setText(serverURL.toString());
         new SendMyCertificateTask().execute(serverURL);
+    }
+
+    public class SendEncryptedDataTask extends  AsyncTask<URL, Void, Void> {
+        String postData;
+
+        SendEncryptedDataTask(String postData) {
+            this.postData = postData;
+        }
+        @Override
+        protected Void doInBackground(URL... urls) {
+            URL searchUrl = urls[0];
+            try {
+                NetworkUtils.getResponseFromHttpUrl(searchUrl, "POST", postData, applicationJsonContentType);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error when sending encrypted POST: " + e.getMessage());
+            }
+            return null;
+        }
     }
 
     public class SendMyCertificateTask extends  AsyncTask<URL, Void, Void> {
@@ -203,7 +266,6 @@ public class PolicyClient extends AppCompatActivity {
         @Override
         protected Void doInBackground(URL... urls) {
             URL searchUrl = urls[0];
-            String contactServerResult = null;
             StringWriter sw = new StringWriter();
             JcaPEMWriter pw = new JcaPEMWriter(sw);
             try {
@@ -216,9 +278,8 @@ public class PolicyClient extends AppCompatActivity {
             String pemData = sw.toString();
             System.out.println(pemData);
             try {
-                contactServerResult = NetworkUtils.getResponseFromHttpUrl(searchUrl, "POST", pemData);
-                Log.d(TAG, contactServerResult);
-            } catch (IOException e) {
+                NetworkUtils.getResponseFromHttpUrl(searchUrl, "POST", pemData, textPlainContentType);
+                } catch (IOException e) {
                 e.printStackTrace();
             }
             return null;
@@ -232,26 +293,19 @@ public class PolicyClient extends AppCompatActivity {
             String contactServerResult = null;
             X509Certificate certificate = null;
             try {
-                contactServerResult = NetworkUtils.getResponseFromHttpUrl(searchUrl, "GET", "");
+                contactServerResult = NetworkUtils.getResponseFromHttpUrl(searchUrl, "GET", "", textPlainContentType);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            String body = NetworkUtils.extractBody(contactServerResult);
             try {
-                String begin = "/r/n----BEGIN CERTIFICATE-----/r/n";
-                String end = "/r/n-----END CERTIFICATE-----/r/n/r/n";
-                String temp = body.substring(begin.length(), (body.length() - end.length()));
-                String parsedBody = temp.replaceAll("\\p{javaSpaceChar}{1,}", "\r\n");
-                String finalCert = begin.concat(parsedBody.concat(end));
-                PEMParser parser = new PEMParser(new StringReader(finalCert));
-                //PEMParser parser = new PEMParser(new StringReader(body));
-                certificate = (X509Certificate) parser.readObject();
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.d(TAG, "Errore nel riconoscimento del certificato ricevuto\n" + e.getMessage());
+                CertificateFactory fact = CertificateFactory.getInstance("X.509");
+                certificate = (X509Certificate) fact.generateCertificate(new ByteArrayInputStream(contactServerResult.getBytes(Charset.forName("UTF-8"))));
             } catch (NullPointerException e1) {
                 e1.printStackTrace();
                 Log.d(TAG, "Errore nella lettura del body ricevuto");
+            } catch (CertificateException e2) {
+                e2.printStackTrace();
+                Log.d(TAG, "Errore nella creazione del certificato");
             }
             return certificate;
         }
@@ -272,14 +326,4 @@ public class PolicyClient extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
-
-    /*@Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int itemThatWasClickedId = item.getItemId();
-        if (itemThatWasClickedId == R.id.user_management_button) {
-            certificateRequest();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }*/
 }

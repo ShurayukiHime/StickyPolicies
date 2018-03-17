@@ -20,7 +20,6 @@ import android.util.Log;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -70,7 +69,7 @@ public class NetworkUtils {
         return url;
     }
 
-    public static String getResponseFromHttpUrl(URL url, String requestMethod, String postData) throws IOException {
+    public static String getResponseFromHttpUrl(URL url, String requestMethod, String postData, String contentType) throws IOException {
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {
             Log.d("NetworkUtils", "Opened connection with url " + url.toString());
@@ -79,13 +78,18 @@ public class NetworkUtils {
 
             if (!postData.isEmpty()) {
                 urlConnection.setDoOutput(true);
-                OutputStream out = urlConnection.getOutputStream();
-                BufferedWriter writer = new BufferedWriter(
-                        new OutputStreamWriter(out, "UTF-8"));
-                writer.write("PostData=" + postData);
-                writer.flush();
-                writer.close();
-                out.close();
+                urlConnection.setRequestProperty("Content-Type", contentType);
+                try {
+                    OutputStream out = urlConnection.getOutputStream();
+                    BufferedWriter writer = new BufferedWriter(
+                            new OutputStreamWriter(out, "UTF-8"));
+                    writer.write(postData);
+                    writer.flush();
+                    writer.close();
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             urlConnection.connect();
             Log.d("NetworkUtils", "Message sent!");

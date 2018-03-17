@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,14 +22,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        String folder_main = "PolicyFolder";
-        File f = new File(Environment.getExternalStorageDirectory(), folder_main);
-        if (!f.exists()) {
-            f.mkdirs();
-            Log.d("MainActivity", "folder created!");
-        }
-        Log.d("MainActivity", "already exists :)");
 
         mSwitchToXmlParsingButton = (Button) findViewById(R.id.switch_to_xml_parser);
         mSwitchToXmlParsingButton.setOnClickListener(new View.OnClickListener() {

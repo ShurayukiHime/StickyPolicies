@@ -6,18 +6,36 @@
    <owner>
         <referenceName>referenceName1</referenceName>
         <ownersDetails>ownersDetails1</ownersDetails>
+        <ownersDetails>ownersDetails2</ownersDetails>
+        <certificateSerialNumber>6098596622719104000</certificateSerialNumber>
     </owner>
 
    <policy>
         <target>target1</target>
+        <target>target2</target>
+        <dataType>text</dataType>
         <dataType>audio</dataType>
-        <dataType>picture</dataType>
         <validity>
-            <day>21</day>
-            <month>3</month>
-            <year>2020</year>
+            <day>2</day>
+            <month>5</month>
+            <year>2023</year>
         </validity>
         <constraint>constraint1</constraint>
         <action>action1</action>
+        <action>action2</action>
+    </policy>
+
+   <policy>
+        <target>target3</target>
+        <target>target4</target>
+        <dataType>video</dataType>
+        <validity>
+            <day>17</day>
+            <month>3</month>
+            <year>2027</year>
+        </validity>
+        <constraint>constraint2</constraint>
+        <constraint>constraint3</constraint>
+        <action>action3</action>
     </policy>
 </stickyPolicy>

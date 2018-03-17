@@ -65,7 +65,7 @@ public class XmlParserActivity extends AppCompatActivity {
             return;
         }*/
 
-        InputStream is = getContext().getResources().openRawResource(R.raw.bozzaxmlpolicy);
+        InputStream is = getContext().getResources().openRawResource(R.raw.policy1);
 
         mXmlParsingResults.setText("");
         StickyPolicyParser parser = new StickyPolicyParser();

@@ -2,20 +2,21 @@
 <stickyPolicy xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="PKIstickypolicy.xsd">
 
     <trustedAuthority>trustedAuthority1</trustedAuthority>
-    <trustedAuthority>trustedAuthority2</trustedAuthority>
 
    <owner>
-        <referenceName>referenceName1</referenceName>
+   		<referenceName>referenceName1</referenceName>
         <ownersDetails>ownersDetails1</ownersDetails>
+        <ownersDetails>ownersDetails2</ownersDetails>
+        <certificateSerialNumber>5684790925891376128</certificateSerialNumber>
     </owner>
 
    <policy>
         <target>target1</target>
         <target>target2</target>
-        <dataType>audio</dataType>
+        <dataType>video</dataType>
         <validity>
-            <day>17</day>
-            <month>3</month>
+            <day>30</day>
+            <month>4</month>            
             <year>2021</year>
         </validity>
         <constraint>constraint1</constraint>
