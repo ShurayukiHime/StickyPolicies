@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button mSwitchToXmlParsingButton;
     private Button mServerPathButton;
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
         mSwitchToXmlParsingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("MainActivity", "Xml button Clicked!");
+                Log.d(TAG, "Xml button Clicked!");
                 Context context = MainActivity.this;
                 Class destinationActivity = XmlParserActivity.class;
                 Intent startXmlParser = new Intent(context, destinationActivity);
@@ -39,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
         mServerPathButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("MainActivity", "Server_Path button Clicked!");
+                Log.d(TAG, "Server_Path button Clicked!");
                 Context context = MainActivity.this;
                 Class destinationActivity = PolicyClient.class;
                 Intent connectToServer = new Intent(context, destinationActivity);

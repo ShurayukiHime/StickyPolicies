@@ -68,7 +68,6 @@ limitations under the License.
             android:id="@+id/tv_search_results_json"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Request Output"
             android:textSize="18sp" />
     </ScrollView>
 </LinearLayout>

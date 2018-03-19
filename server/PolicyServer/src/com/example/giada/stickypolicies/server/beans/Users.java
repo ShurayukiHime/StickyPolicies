@@ -25,5 +25,12 @@ public class Users implements Serializable {
 	public X509Certificate getCertificate (BigInteger serialNumber) {
 		return this.userCertificates.get(serialNumber);
 	}
+	
+	public String getSerialNumbers() {
+		StringBuilder sb = new StringBuilder();
+		for (BigInteger i : this.userCertificates.keySet())
+			sb.append(i + "\n");
+		return sb.toString();
+	}
 
 }

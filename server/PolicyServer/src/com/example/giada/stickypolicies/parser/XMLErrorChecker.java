@@ -18,6 +18,7 @@ public class XMLErrorChecker extends DefaultHandler {
 	public void fatalError (SAXParseException e) {
 		System.out.println("Parsing error: "+e.getMessage()); 
 		System.out.println("Cannot continue."); 
+		e.printStackTrace();
 		System.exit(1);
 	}
 }

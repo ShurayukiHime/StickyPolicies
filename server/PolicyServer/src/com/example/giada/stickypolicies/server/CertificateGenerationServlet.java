@@ -21,7 +21,6 @@ public class CertificateGenerationServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private X509Certificate dataOwnerCert;
 	private Users users;
-	// TODO: manage users with java bean
 	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		PrintWriter out = response.getWriter();
@@ -78,7 +77,6 @@ public class CertificateGenerationServlet extends HttpServlet {
 			CertificateFactory fact = CertificateFactory.getInstance("X.509");
 			dataOwnerCert = (X509Certificate) fact.generateCertificate(new ByteArrayInputStream(sb.toString().getBytes(Charset.forName("UTF-8"))));
 			
-			//controllare se users nullo
 			users = (Users) this.getServletContext().getAttribute("users");
 			users.addCertificate(dataOwnerCert);
 			this.getServletContext().setAttribute("users", users);
@@ -86,5 +84,6 @@ public class CertificateGenerationServlet extends HttpServlet {
 			e.printStackTrace();
 		}
 		response.setStatus(HttpServletResponse.SC_OK);
+		System.out.println(users.getSerialNumbers());
 	}
 }

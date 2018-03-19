@@ -1,4 +1,4 @@
-package com.example.giada.stickypoliciesapp.crypto;
+package com.example.giada.stickypoliciesapp.utilities;
 
 import android.util.Log;
 
@@ -37,7 +37,7 @@ import javax.security.auth.x500.X500Principal;
  * Created by Giada on 06/03/2018.
  */
 
-public class CryptoUtilities {
+public class CryptoUtils {
 
     private static KeyPair keyPair;
     private final static String CNUser = "Alice";
@@ -48,7 +48,7 @@ public class CryptoUtilities {
     private static String signatureAlgorithm = "MD5WithRSA";
     private static String symmetricEncrAlgorithm = "AES";
     private static String digestAlgorithm = "SHA-256";
-    private static String TAG = "CryptoUtilities";
+    private final static String TAG = CryptoUtils.class.getSimpleName();
 
     public static KeyPair getKeyPair() {
         //maybe this is insecure?

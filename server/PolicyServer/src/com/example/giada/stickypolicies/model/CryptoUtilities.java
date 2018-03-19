@@ -92,8 +92,6 @@ public class CryptoUtilities {
 	}
 
 	public static String getPEMCertificate(X509Certificate certificate) throws IOException {
-		// response.getOutputStream().write(taCert.getEncoded());
-		// sends the certificate with DER format.
 		StringWriter sw = new StringWriter();
 		JcaPEMWriter pw = new JcaPEMWriter(sw);
 		pw.writeObject(certificate);
@@ -133,7 +131,6 @@ public class CryptoUtilities {
             sig.update(text);
             byte[] signatureBytes = sig.sign();
 
-            //return javax.xml.bind.DatatypeConverter.printBase64Binary(signatureBytes);
             return signatureBytes;
         } catch (Exception e) {
             e.printStackTrace();

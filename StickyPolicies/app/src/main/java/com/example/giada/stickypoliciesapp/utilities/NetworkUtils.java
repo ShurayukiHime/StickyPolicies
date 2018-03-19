@@ -18,9 +18,6 @@ package com.example.giada.stickypoliciesapp.utilities;
 import android.net.Uri;
 import android.util.Log;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +35,7 @@ public class NetworkUtils {
             "10.0.2.2:8080";
 
     final static String MY_SERVER_DOMAIN = "PolicyServer";
-    private static String TAG = "NetworkUtils";
+    private final static String TAG = NetworkUtils.class.getSimpleName();
 
     public static URL buildUrl(String targetUri, String queryKeyParam, String queryValueParam) {
         /*Uri builtUri = Uri.parse(MY_BASE_URL_PORT + "/" + MY_SERVER_DOMAIN + "/" + OBTAIN_CERT_PATH).buildUpon()
@@ -72,7 +69,7 @@ public class NetworkUtils {
     public static String getResponseFromHttpUrl(URL url, String requestMethod, String postData, String contentType) throws IOException {
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {
-            Log.d("NetworkUtils", "Opened connection with url " + url.toString());
+            Log.d(TAG, "Opened connection with url " + url.toString());
             urlConnection.setRequestMethod(requestMethod);
             urlConnection.setChunkedStreamingMode(0);
 
@@ -92,31 +89,23 @@ public class NetworkUtils {
                 }
             }
             urlConnection.connect();
-            Log.d("NetworkUtils", "Message sent!");
+            Log.d(TAG, "Message sent!");
 
-            if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK)
-                Log.d(TAG, "Response code: 200!");
+            Log.d(TAG, "Response code: " + urlConnection.getResponseCode());
             InputStream in = urlConnection.getInputStream();
             Scanner scanner = new Scanner(in);
             scanner.useDelimiter("\\A");
 
             boolean hasInput = scanner.hasNext();
             if (hasInput) {
-                Log.d("NetworkUtils", "Found something in response!");
+                Log.d(TAG, "Found something in response body");
                 return scanner.next();
             } else {
-                Log.d("NetworkUtils", "Tough luck!");
+                Log.d(TAG, "Response body is empty");
                 return null;
             }
         } finally {
             urlConnection.disconnect();
         }
-    }
-
-    public static String extractBody (String htmlDocument) {
-        String body = null;
-        Document doc = Jsoup.parse(htmlDocument);
-        body = doc.body().text();
-        return body;
     }
 }

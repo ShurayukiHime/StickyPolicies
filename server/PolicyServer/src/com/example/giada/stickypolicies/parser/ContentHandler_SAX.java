@@ -9,12 +9,12 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.example.giada.stickypolicies.model.PKIPolicy;
+import com.example.giada.stickypolicies.model.StickyPolicy;
 
 public class ContentHandler_SAX extends DefaultHandler {
 
 	private List<String> tempData = new ArrayList<String>();
-	private PKIPolicy stickyPolicy;
+	private StickyPolicy stickyPolicy;
 
 	private boolean isInPkiPolicy = false;
 	private boolean isInPolicy = false;
@@ -164,7 +164,7 @@ public class ContentHandler_SAX extends DefaultHandler {
 		} else if (localName.equals("owner")) {
 			isInOwner = false;
 			
-			stickyPolicy = new PKIPolicy(trustedAuthority);
+			stickyPolicy = new StickyPolicy(trustedAuthority);
 			stickyPolicy.setOwner(referenceName, ownersDetails, serialNumber);
 		} else if (localName.equals("target")) {
 			isInTarget = false;
@@ -212,7 +212,7 @@ public class ContentHandler_SAX extends DefaultHandler {
 		return ignorableWhitespace;
 	}
 
-	public PKIPolicy getStickyPolicy() {
+	public StickyPolicy getStickyPolicy() {
 		return stickyPolicy;
 	}
 

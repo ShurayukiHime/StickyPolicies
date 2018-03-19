@@ -6,24 +6,24 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-public class PKIPolicy {
+public class StickyPolicy {
 	private String[] trustedAuthority;
 	private Owner owner;
 	private List<Policy> policies;
 
-	public PKIPolicy(String[] trustedAuthority) {
+	public StickyPolicy(String[] trustedAuthority) {
 		super();
 		this.trustedAuthority = trustedAuthority;
 		this.owner = new Owner();
 		this.policies = new ArrayList<Policy>();
 	}
 
-	public void addPolicy(String[] targets, String[] dataTypes, Date validityDate, String[] constraints, String[] action) {
-		this.policies.add(new Policy(targets, dataTypes, validityDate, constraints, action));
+	private StickyPolicy() {
+		super();
 	}
 
-	public void setOwner(String referenceName, String[] details, BigInteger certificateSN) {
-		this.owner = new Owner(referenceName, details, certificateSN);
+	public void addPolicy(String[] targets, String[] dataTypes, Date validityDate, String[] constraints, String[] action) {
+		this.policies.add(new Policy(targets, dataTypes, validityDate, constraints, action));
 	}
 
 	public String[] getTrustedAuthority() {
@@ -34,6 +34,10 @@ public class PKIPolicy {
 		return owner;
 	}
 
+	public void setOwner(String referenceName, String[] details, BigInteger certificateSN) {
+		this.owner = new Owner(referenceName, details, certificateSN);
+	}
+	
 	public List<Policy> getPolicies() {
 		return policies;
 	}
@@ -72,20 +76,40 @@ class Policy {
 		return target;
 	}
 
+	void setTarget(String[] target) {
+		this.target = target;
+	}
+	
 	public String[] getDataType() {
 		return dataType;
 	}
 
+	void setDataType(String[] dataType) {
+		this.dataType = dataType;
+	}
+	
 	public Date getExpirationDate() {
 		return expirationDate;
 	}
 
+	void setExpirationDate(Date expirationDate) {
+		this.expirationDate = expirationDate;
+	}
+	
 	public String[] getConstraint() {
 		return constraint;
 	}
 
+	void setConstraint(String[] constraint) {
+		this.constraint = constraint;
+	}
+	
 	public String[] getAction() {
 		return action;
+	}
+
+	void setAction(String[] action) {
+		this.action = action;
 	}
 
 	@Override

@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.security.DigestException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Base64;
@@ -13,17 +16,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.bouncycastle.crypto.CryptoException;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.XML;
 import org.xml.sax.SAXException;
 
 import com.example.giada.stickypolicies.model.CryptoUtilities;
 import com.example.giada.stickypolicies.parser.ContentHandler_SAX;
 import com.example.giada.stickypolicies.parser.XMLParserSAX;
 import com.example.giada.stickypolicies.server.beans.Users;
+import com.google.gson.Gson;
 
 public class DataAccessServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -73,29 +72,17 @@ public class DataAccessServlet extends HttpServlet {
         } 
         body.close();
 		
-		JSONObject requestData = null;
-		try {
-			requestData = new JSONObject(sb.toString());
-		} catch (JSONException e) {
-			System.out.println(e.getMessage());
-	    	e.printStackTrace();
-		}
-		System.out.println(requestData);
-		
 		/*
 		 * NOTA BENE
 		 * LA TA NON DOVREBBE RICEVERE I DATI SENSIBILI DA BOB!
 		 */
-		
-		String policy = XML.toString(requestData.getString("policy"));
-		String taEncryption = requestData.getString("taEncryption");
-		String ownerSignature = requestData.getString("ownerSignature");
-		String encryptedPiiString = requestData.getString("encryptedPii");
-		
-		byte[] keyAndHashEncrypted = Base64.getDecoder().decode(taEncryption);
-		byte[] signedEncrPolicyAndHash = Base64.getDecoder().decode(ownerSignature);
-		byte[] encryptedPii = Base64.getDecoder().decode(encryptedPiiString);
-		
+        
+        Gson requestData = new Gson();
+        EncryptedData data = requestData.fromJson(sb.toString(), EncryptedData.class);
+        String policy = data.getStickyPolicy();
+        byte[] keyAndHashEncrypted = data.getKeyAndHashEncrypted();
+        byte[] signedEncrKeyAndHash = data.getSignedEncrkeyAndHash();
+        
 		try {
 			XMLParserSAX parser = new XMLParserSAX(policy, false);
 				//throws exception
@@ -105,7 +92,7 @@ public class DataAccessServlet extends HttpServlet {
 			users = (Users) this.getServletContext().getAttribute("users");
 			X509Certificate dataOwnerCertificate = users.getCertificate(certificateSN);
 			if (dataOwnerCertificate == null) {
-				endConnection(response, "User with SN " + certificateSN + " non registered. Cannot provide a public key.");
+				endConnection(response, HttpServletResponse.SC_FORBIDDEN, "User with SN " + certificateSN + " not registered. Cannot provide a public key.");
 				return;
 			}
 				// compute hash from policy
@@ -114,26 +101,24 @@ public class DataAccessServlet extends HttpServlet {
 				byte[] computedSignedKeyAndHash = CryptoUtilities.decryptAsymmetric(
 						CryptoUtilities.getKeys().getPrivate(),keyAndHashEncrypted);
 				int digestLength = CryptoUtilities.getDigestSize();
-				int anotherDigestLength = computedPolicyDigest.length;
-				System.out.println("Two message digest sizes! " + digestLength + ", " +  anotherDigestLength); 
 				// separate hash from key
 				byte[] allegedSymmetricKey = Arrays.copyOfRange(computedSignedKeyAndHash, 
-						0, (computedSignedKeyAndHash.length - ADIGESTLENGTH));
+						0, (computedSignedKeyAndHash.length - digestLength));
 				byte[] retrievedPolicyDigest = Arrays.copyOfRange(computedSignedKeyAndHash, 
-						(computedSignedKeyAndHash.length - ADIGESTLENGTH), ADIGESTLENGTH);
+						(computedSignedKeyAndHash.length - digestLength), digestLength);
 				// check if obtained hash equals computed one
 				if (!(retrievedPolicyDigest.equals(computedPolicyDigest))) {
-					endConnection(response, "Computed policy hash does not match with the sent one. Suspected message tampering.");
+					endConnection(response, HttpServletResponse.SC_FORBIDDEN, "Computed policy hash does not match with the sent one. Suspected message tampering.");
 					return;
 				}
 				// verify user's signature
 				// at this point, you trust Enc(PubTA, K||h(Policy)) i.e. keyAndHashEncrypted and computedSignedKeyAndHash, to be correct
 				boolean correctTASignature = CryptoUtilities.verify(
 						dataOwnerCertificate.getPublicKey(),
-						signedEncrPolicyAndHash, keyAndHashEncrypted);
+						signedEncrKeyAndHash, keyAndHashEncrypted);
 				// transmit alleged encrypted symmetric key
 				if (!(correctTASignature)) {
-					endConnection(response, "Data Owner's signature didn't match. Suspected forgery.");
+					endConnection(response, HttpServletResponse.SC_FORBIDDEN, "Data Owner's signature didn't match. Suspected forgery.");
 					return;
 				}
 				PrintWriter out = response.getWriter();
@@ -141,14 +126,66 @@ public class DataAccessServlet extends HttpServlet {
 				response.setStatus(HttpServletResponse.SC_OK);
 		} catch (SAXException e) {
 			e.printStackTrace();
-			endConnection(response, "Malformed policy document: " + e.getMessage());
-		}
+			endConnection(response, HttpServletResponse.SC_FORBIDDEN, "Malformed policy document: " + e.getMessage());
+		} catch (DigestException | NoSuchAlgorithmException | NoSuchProviderException e) {
+			e.printStackTrace();
+			endConnection(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error in performing cryptographic operations: " + e.getMessage());
+		} 
 	}
 	
-	private void endConnection (HttpServletResponse response, String message) throws IOException {
+	private class EncryptedData {
+        private String stickyPolicy;
+        private byte[] keyAndHashEncrypted;
+        private byte[] signedEncrkeyAndHash;
+        private byte[] encryptedPii;
+
+        public EncryptedData() {
+        }
+
+        public EncryptedData(String stickyPolicy, byte[] keyAndHashEncrypted, byte[] signedEncrkeyAndHash, byte[] encryptedPii) {
+            this.stickyPolicy = stickyPolicy;
+            this.keyAndHashEncrypted = keyAndHashEncrypted;
+            this.signedEncrkeyAndHash = signedEncrkeyAndHash;
+            this.encryptedPii = encryptedPii;
+        }
+
+        public String getStickyPolicy() {
+            return stickyPolicy;
+        }
+
+        public void setStickyPolicy(String stickyPolicy) {
+            this.stickyPolicy = stickyPolicy;
+        }
+
+        public byte[] getKeyAndHashEncrypted() {
+            return keyAndHashEncrypted;
+        }
+
+        public void setKeyAndHashEncrypted(byte[] keyAndHashEncrypted) {
+            this.keyAndHashEncrypted = keyAndHashEncrypted;
+        }
+
+        public byte[] getSignedEncrkeyAndHash() {
+            return signedEncrkeyAndHash;
+        }
+
+        public void setSignedEncrkeyAndHash(byte[] signedEncrkeyAndHash) {
+            this.signedEncrkeyAndHash = signedEncrkeyAndHash;
+        }
+
+        public byte[] getEncryptedPii() {
+            return encryptedPii;
+        }
+
+        public void setEncryptedPii(byte[] encryptedPii) {
+            this.encryptedPii = encryptedPii;
+        }
+    }
+	
+	private void endConnection (HttpServletResponse response, int responseStatusCode, String message) throws IOException {
 		System.out.println(message);
 		PrintWriter out = response.getWriter();
 		out.println(message);
-		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+		response.setStatus(responseStatusCode);
 	}
 }
