@@ -16,6 +16,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.soap.providers.com.Log;
 import org.xml.sax.SAXException;
 
 import com.example.giada.stickypolicies.model.CryptoUtilities;
@@ -105,9 +107,9 @@ public class DataAccessServlet extends HttpServlet {
 				byte[] allegedSymmetricKey = Arrays.copyOfRange(computedSignedKeyAndHash, 
 						0, (computedSignedKeyAndHash.length - digestLength));
 				byte[] retrievedPolicyDigest = Arrays.copyOfRange(computedSignedKeyAndHash, 
-						(computedSignedKeyAndHash.length - digestLength), digestLength);
+						(computedSignedKeyAndHash.length - digestLength), computedSignedKeyAndHash.length);
 				// check if obtained hash equals computed one
-				if (!(retrievedPolicyDigest.equals(computedPolicyDigest))) {
+				if (!(CryptoUtilities.compareDigests(retrievedPolicyDigest, computedPolicyDigest))) {
 					endConnection(response, HttpServletResponse.SC_FORBIDDEN, "Computed policy hash does not match with the sent one. Suspected message tampering.");
 					return;
 				}
@@ -122,7 +124,9 @@ public class DataAccessServlet extends HttpServlet {
 					return;
 				}
 				PrintWriter out = response.getWriter();
-				out.println(Base64.getEncoder().encodeToString(allegedSymmetricKey));
+				response.setContentType("application/json; charset=utf-8");
+				Gson gson = new Gson();
+				out.println(gson.toJson(allegedSymmetricKey, byte[].class));
 				response.setStatus(HttpServletResponse.SC_OK);
 		} catch (SAXException e) {
 			e.printStackTrace();

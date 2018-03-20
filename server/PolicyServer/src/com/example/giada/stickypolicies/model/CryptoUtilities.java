@@ -19,6 +19,8 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
@@ -106,7 +108,6 @@ public class CryptoUtilities {
             MessageDigest md = MessageDigest.getInstance(digestAlgorithm);
             md.update(text);
             return md.digest();
-            //return DatatypeConverter.printHexBinary(messageDigest);
         } catch (NoSuchAlgorithmException cnse) {
             throw new DigestException("Couldn't make digest of partial content " + cnse.getMessage());
         }
@@ -121,6 +122,10 @@ public class CryptoUtilities {
 			e.printStackTrace();
 		}
 		return md.getDigestLength();
+	}
+
+	public static boolean compareDigests (byte[] first, byte[] second) {
+		return MessageDigest.isEqual(first, second);
 	}
 
 	public static byte[] sign (byte[] text) throws SignatureException {
@@ -173,5 +178,17 @@ public class CryptoUtilities {
             e.printStackTrace();
         }
         return decodedBytes;
+    }
+
+	public static byte[] generateSymmetricRandomKey() {
+        KeyGenerator keyGen = null;
+        try {
+            keyGen = KeyGenerator.getInstance(symmetricEncrAlgorithm);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        keyGen.init(256); // for example
+        SecretKey secretKey = keyGen.generateKey();
+        return secretKey.getEncoded();
     }
 }

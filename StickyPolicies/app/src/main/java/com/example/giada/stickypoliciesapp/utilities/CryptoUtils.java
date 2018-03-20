@@ -44,6 +44,7 @@ public class CryptoUtils {
     private static final String BC = org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME;
     private static X509Certificate certificate;
     private static String encryptionAlgorithm = "RSA";
+    private static String anotherEncryptionAlgorithm = "RSA/ECB/PKCS1Padding";
     private static String securityProvider = "BC";
     private static String signatureAlgorithm = "MD5WithRSA";
     private static String symmetricEncrAlgorithm = "AES";
@@ -143,7 +144,7 @@ public class CryptoUtils {
     public static byte[] encryptAsymmetric (Key publicKey, byte[] plaintext) {
         byte[] encodedBytes = null;
         try {
-            Cipher c = Cipher.getInstance(encryptionAlgorithm);
+            Cipher c = Cipher.getInstance(anotherEncryptionAlgorithm);
             c.init(Cipher.ENCRYPT_MODE, publicKey);
             encodedBytes = c.doFinal(plaintext);
         } catch (Exception e) {
@@ -155,7 +156,7 @@ public class CryptoUtils {
     public static byte[] decryptAsymmetric (Key privateKey, byte[] encodedBytes) {
         byte[] decodedBytes = null;
         try {
-            Cipher c = Cipher.getInstance(encryptionAlgorithm);
+            Cipher c = Cipher.getInstance(anotherEncryptionAlgorithm);
             c.init(Cipher.DECRYPT_MODE, privateKey);
             decodedBytes = c.doFinal(encodedBytes);
         } catch (Exception e) {
@@ -174,6 +175,17 @@ public class CryptoUtils {
         } catch (NoSuchAlgorithmException cnse) {
             throw new DigestException("Couldn't make digest of partial content " + cnse.getMessage());
         }
+    }
+
+    public static int getDigestSize() {
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance(digestAlgorithm);
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("Couldn't instantiate digest.");
+            e.printStackTrace();
+        }
+        return md.getDigestLength();
     }
 
     public static byte[] generateSymmetricRandomKey() {

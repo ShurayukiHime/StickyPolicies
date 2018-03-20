@@ -54,6 +54,7 @@ public class PolicyClient extends AppCompatActivity {
 
     private X509Certificate taCertificate;
     private String pii = "this is some very personal data!";
+    private EncryptedData bobsData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,37 +94,31 @@ public class PolicyClient extends AppCompatActivity {
     }
 
     private void accessEncryptedData() {
-        URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "","");
-        mUrlDisplayTextView.setText(serverURL.toString());
-
-        // 1) separate encrypted PII from the rest
-        FileInputStream fileInputStream = null;
-        try {
-
-            //PAY ATTENTION TO FILENAME!
-            fileInputStream = this.getApplicationContext().openFileInput("somefile");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            Log.d(TAG, "File not found!");
-        }
-        InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try {
-            int read = inputStreamReader.read();
-            while (read != -1) {
-                byteArrayOutputStream.write(read);
-                read = inputStreamReader.read();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.d(TAG, "Error when reading the encrypted data from the stream");
-        }
+        // suppose we received bobsData as Gson from Alice
 
         // 2) contact TA and send stuff
+        EncryptedData taData = new EncryptedData(bobsData.getStickyPolicy(), bobsData.getKeyAndHashEncrypted(), bobsData.getSignedEncrkeyAndHash(), null);
+        Gson jsonData = new Gson();
+        String postData = jsonData.toJson(taData, EncryptedData.class);
+        URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "", "");
+        mUrlDisplayTextView.setText(serverURL.toString());
         // 3) obtain key
+        byte[] encodedSymmKey = new byte[0];
+        try {
+            encodedSymmKey = new SendEncryptedDataTask(postData).execute(serverURL).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Error or refusal from Trusted Authority: " + e.getMessage());
+        }
+            //may not be the wisest solution
         // 4) decryptSymmetric & profit
-
-        new GetTrustedAuthorityCertificateTask().execute(serverURL);
+        try {
+            byte[] decodedPii = CryptoUtils.decryptSymmetric(encodedSymmKey, bobsData.getEncryptedPii());
+            String pii = new String (decodedPii, Charset.forName("UTF-8"));
+            mSearchResultsTextView.append("Alice's personal data: " + pii + "\n");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void shareEncryptedData() {
@@ -180,7 +175,6 @@ public class PolicyClient extends AppCompatActivity {
         ///////////// ---- HARDCODED -- NOT GOOD
         String[] fakeSN = policyFile.split("certificateSerialNumber");
         String policy = fakeSN[0] + "certificateSerialNumber>" + dataOwnerCertSN + "</certificateSerialNumber" + fakeSN[2];
-        Log.d(TAG, "Serial  number: " + dataOwnerCertSN);
         ///////////// ---- HARDCODED -- NOT GOOD
         ////////////////////////////////////////
 
@@ -223,10 +217,13 @@ public class PolicyClient extends AppCompatActivity {
         }
 
         // save or share somewhere somehow
-        EncryptedData data = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, encryptedPii);
+        bobsData = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, encryptedPii);
+        // TA doesn't receive pii
+            //1) bc the paper says so
+            //2) bc it'd introduce a weakness
+        EncryptedData data = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, null);
         Gson jsonData = new Gson();
         String postData = jsonData.toJson(data, EncryptedData.class);
-        System.out.println("\n" + postData + "\n");
         // this url should be changed with Bob's address
         URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "", "");
         mUrlDisplayTextView.setText(serverURL.toString());
@@ -292,7 +289,7 @@ public class PolicyClient extends AppCompatActivity {
         new SendMyCertificateTask().execute(serverURL);
     }
 
-    public class SendEncryptedDataTask extends  AsyncTask<URL, Void, String> {
+    public class SendEncryptedDataTask extends  AsyncTask<URL, Void, byte[]> {
         String postData;
 
         protected SendEncryptedDataTask(String postData) {
@@ -300,15 +297,9 @@ public class PolicyClient extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(String s) {
-            if (s != null)
-                mSearchResultsTextView.append("Result sending data: " + s + "\n");
-            super.onPostExecute(s);
-        }
-
-        @Override
-        protected String doInBackground(URL... urls) {
+        protected byte[] doInBackground(URL... urls) {
             String responseBody = null;
+            byte[] symmetricKey = null;
             URL searchUrl = urls[0];
             try {
                 responseBody = NetworkUtils.getResponseFromHttpUrl(searchUrl, "POST", postData, applicationJsonContentType);
@@ -316,7 +307,8 @@ public class PolicyClient extends AppCompatActivity {
                 e.printStackTrace();
                 Log.d(TAG, "Error when sending encrypted POST: " + e.getMessage());
             }
-            return responseBody;
+            Gson gson = new Gson();
+            return gson.fromJson(responseBody, byte[].class);
         }
     }
 
