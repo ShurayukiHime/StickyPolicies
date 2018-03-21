@@ -10,14 +10,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.Base64;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.soap.providers.com.Log;
 import org.xml.sax.SAXException;
 
 import com.example.giada.stickypolicies.model.CryptoUtilities;

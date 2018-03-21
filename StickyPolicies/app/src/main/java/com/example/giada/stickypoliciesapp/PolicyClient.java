@@ -19,17 +19,14 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.DigestException;
-import java.security.Key;
+import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -103,6 +100,9 @@ public class PolicyClient extends AppCompatActivity {
         URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "", "");
         mUrlDisplayTextView.setText(serverURL.toString());
         // 3) obtain key
+
+        //POSSIBLE IMPROVEMENT: BOB REGISTERS@TA AND KEY IS SENT ENCRYPTED WITH BOB'S PUBK
+
         byte[] encodedSymmKey = new byte[0];
         try {
             encodedSymmKey = new SendEncryptedDataTask(postData).execute(serverURL).get();
@@ -141,7 +141,7 @@ public class PolicyClient extends AppCompatActivity {
             Log.d(TAG, "Error closing input stream: " + e.getMessage());
         }
 
-        Key taPublicKey = null;
+        PublicKey taPublicKey = null;
         if(taCertificate == null) {
             Log.d(TAG, "Certificate is null, creating a new one...");
             Toast.makeText(this.getApplicationContext(), "Please wait... Cryptography is working for you!", Toast.LENGTH_LONG);
@@ -190,7 +190,7 @@ public class PolicyClient extends AppCompatActivity {
             e.printStackTrace();
             Log.d(TAG, "Error calculating policy digest: " + e.getMessage());
         }
-        // 5) concatenate policy and  digest, encrypt with PubTa
+        // 5) append policy and  digest, encrypt with PubTa
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream( );
         try {
             byteArrayOutputStream.write(encodedSymmetricKey);
@@ -299,7 +299,6 @@ public class PolicyClient extends AppCompatActivity {
         @Override
         protected byte[] doInBackground(URL... urls) {
             String responseBody = null;
-            byte[] symmetricKey = null;
             URL searchUrl = urls[0];
             try {
                 responseBody = NetworkUtils.getResponseFromHttpUrl(searchUrl, "POST", postData, applicationJsonContentType);

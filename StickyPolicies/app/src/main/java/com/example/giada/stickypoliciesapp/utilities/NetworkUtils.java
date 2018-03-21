@@ -30,27 +30,20 @@ import java.util.Scanner;
 
 public class NetworkUtils {
 
-    final static String MY_BASE_URL_PORT =
-            //"192.168.1.8:8080";
-            "10.0.2.2:8080";
-
+    final static String MY_BASE_URL ="10.0.2.2:8080";
     final static String MY_SERVER_DOMAIN = "PolicyServer";
     private final static String TAG = NetworkUtils.class.getSimpleName();
 
     public static URL buildUrl(String targetUri, String queryKeyParam, String queryValueParam) {
-        /*Uri builtUri = Uri.parse(MY_BASE_URL_PORT + "/" + MY_SERVER_DOMAIN + "/" + OBTAIN_CERT_PATH).buildUpon()
-                .appendQueryParameter(PARAM_QUERY, searchQuery)
-                .appendQueryParameter(PARAM_SORT, sortBy)
-                .build();*/
         Uri.Builder builder = new Uri.Builder();
         if (queryKeyParam.isEmpty()) {
             builder.scheme("http")
-                    .encodedAuthority(MY_BASE_URL_PORT)
+                    .encodedAuthority(MY_BASE_URL)
                     .appendPath(MY_SERVER_DOMAIN)
                     .appendPath(targetUri);
         } else {
             builder.scheme("http")
-                    .encodedAuthority(MY_BASE_URL_PORT)
+                    .encodedAuthority(MY_BASE_URL)
                     .appendPath(MY_SERVER_DOMAIN)
                     .appendPath(targetUri)
                     .appendQueryParameter(queryKeyParam, queryValueParam);
