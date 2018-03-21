@@ -39,27 +39,27 @@
 
 	<xs:complexType name="dateType">
 		<xs:sequence>
-			<xs:element name="giorno" type="giornoType" />
-			<xs:element name="mese" type="meseType" />
-			<xs:element name="anno" type="annoType" />
+			<xs:element name="day" type="dayType" />
+			<xs:element name="month" type="monthType" />
+			<xs:element name="year" type="yearType" />
 		</xs:sequence>
 	</xs:complexType>
 
-	<xs:simpleType name="giornoType" >
+	<xs:simpleType name="dayType" >
 		<xs:restriction base="xs:positiveInteger">
 			<xs:minInclusive value="1" />
 			<xs:maxInclusive value="31" />
 		</xs:restriction>
 	</xs:simpleType>
 
-	<xs:simpleType name="meseType" >
+	<xs:simpleType name="monthType" >
 		<xs:restriction base="xs:positiveInteger">
 			<xs:minInclusive value="1" />
 			<xs:maxInclusive value="12" />
 		</xs:restriction>
 	</xs:simpleType>
 
-	<xs:simpleType name="annoType" >
+	<xs:simpleType name="yearType" >
 			<xs:restriction base="xs:positiveInteger">
 			<xs:minInclusive value="2017" />
 			<xs:maxInclusive value="2027" />
