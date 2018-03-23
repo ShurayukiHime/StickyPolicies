@@ -2,19 +2,52 @@
 \label{chapter3}
 \thispagestyle{empty}
 
-\noindent First, we set up the necessary entities to implement \textit{Sticky Policies}: an Android client and a service provider. The client was developed using Android Studio, while for the service provider, we used Eclipse together with Apache Tomcat; the communication was implemented through HTTP protocol.
+\noindent First, we set up the necessary entities to implement \textit{Sticky Policies}: an Android client and a service provider. The client was developed using Android Studio and emulated through the Android Emulator with a Nexus 5X device running Android 7.0 and API level 24. The Trusted Authority was developed using Eclipse and run on Apache Tomcat 8; the communication was implemented through HTTP protocol.
 
-// ADD SOME TECHNICAL DETAILS
+\section{Existing implementations and libraries}
+Nearly each of the possibilities considered in chapter \ref{chapter2} has a dedicated implementation. For Cyphertext-Policy Attribute-Based Encryption there is the \texttt{cpabe} toolkit \cite{bethencourt2011library}, available in the C language. This library provides an encryption scheme such that each private key is associated with a set of attributes rather than with the identity of the data owner. Attributes can be provided as strings from standard input or from a file; moreover, it is possible to combine more than one attribute or rule through predefined operators as 'and', 'or', '>', '<'.
 
-\section{Implementing Sticky Policies through XML}
-The first experiment involved realizing \textit{Sticky Policies} via XML files. This approach was motivated by \cite{mont2003towards}, and an example XML policy was created taking as a reference the one presented in the same paper.
+\subsection{Java Pairing Based Cryptography Library for IBE}
+For Identity-Based Encryption we can rely on the Java Pairing Based Cryptography Library \cite{ISCC:DecIov11}. Private keys are generated from identities alone as well as combined with attributes describing the authorized audience, and it is possible both do encrypt and sign data. Both \cite{ISCC:DecIov11} and \cite{bethencourt2011library} depend on the Pairing-Based Cryptography Library \cite{PBC2007Lynn}, developed in the C language.
 
-In this scenario, two entities, an Android client and a server, communicate between each others and two different kinds of protocols are possible. 
+\lstinputlisting[caption={Java mock class for IBE implementation},label={AHIBEDIP10},language=java]{AHIBEDIP10.java}
 
-To ensure compatibility, we rely on an XML grammar defined through a XSD file.
+As shown in Listing \ref{AHIBEDIP10}, the private key is generated providing several strings in place of the data owner's identity. Different cyphertexts are produced using different attributes as a key, and the same \texttt{CipherParameters} are needed to decrypt correctly.
 
-Server side, a the received policies are parsed and checked for compliance; ADMITTED policies
+The functions \texttt{encaps} and \texttt{decaps} provide encryption and decryption mechanisms. After practical experiments, it results that \cite{ISCC:DecIov11} is a proof-of-concept implementation and it is thus not suited for actual use. The main reasons behind this lay in the implementation of the aforementioned functions: in fact, the \texttt{encaps} function does not take any plaintext in input, but it is generated inside its body by the function \texttt{process()}. As we can see from Listing \ref{PairingKeyEncapsulationMechanism}, this function calls \texttt{processBlock} supplying as input an empty byte array instead of an actual input.
 
- an XML grammar was specified through a XSD file, and a parser was implemented server-side to check the received policy files for compliance; default behaviour for non-compliant policy was disclosure refusal.
+\lstinputlisting[caption={Excerpt from PairingKeyEncapsulationMechanism class},label={PairingKeyEncapsulationMechanism},language=java]{PairingKeyEncapsulationMechanism.java}
 
-More specifically,
+It is possible to modify the source code by opening a file, or supplying a run-time byte array containing the information to encrypt, and calling \texttt{processBlock} purposely:
+
+\lstinline[language=java]!return processBlock(dataArray, 0, dataArray.length);!
+
+To obtain the encrypted text it is also necessary to modify the last statement in the \texttt{processBlock} function called by \texttt{process}. In fact, as shown in the documentation for class \texttt{PairingAsymmetricBlockCipher}, the function \texttt{byte[] processBlock(byte[] in, int inOff, int inLen)} takes as second and third arguments the offset and the length of data, thus requiring an invocation like the following:
+
+\lstinline[language=java]!return processBlock(in, 0, in.length);!
+
+The complete content of the mentioned classes is available in Appendix \ref{appendixB}.
+
+After performing data encryption, though, the \texttt{Assert} statements to verify correct decryption fail, which leads us to think that this is only a proof-of-concept implementation. For this reason, and due to the unsuitableness of the available \cite{bethencourt2011library} and \cite{PBC2007Lynn} in the chosen context for this project, we have thus decided to proceed to the implementation of Sticky Policies with a hybrid cryptosystem.
+
+\section{Realizing a Hybrid Cryptosystem}
+In this solution, \textit{Sticky Policies} are realized via XML files and paired through the combination of symmetric and asymmetric cryptography with some personal data. This approach is presented in \cite{pearson2011sticky}, and an example XML policy was created taking as a reference the one presented in the same paper. Following this specification, we present a protocol for the communication of two Android clients, called for simplicity Alice and Bob. 
+
+Alice generates an XML policy to regulate data access, encrypting it with a symmetric key generated locally. The policy and the keys are then encrypted with the Trusted Authority's public key and signed by Alice. For this purpose, Alice should obtain the public key of the Trusted Authority and also a key pair for herself: in our solution, we use self-signed X509 Certificates generated by combining the Java Cryptography Architecture and the Bouncy Castle cryptography APIs for Java. Purposely, Alice contacts the Trusted Authority to obtain its public key, and shares her own if the Trusted Authority is not the issuer of the certificate itself.
+
+To decrypt Alice's data, Bob has to follow this steps:
+\begin{itemize}
+	\item Bob obtained Alice's encrypted data and an attached policy in clear text, together with other encrypted data to guarantee integrity, confidentiality and non-refusal of the policy and data.
+	\item Bob asks the Trust Authority to release the symmetric key, presenting the encrypted data signed by Alice.
+	\item The Trust Authority evaluates the policy and Bob's reliability, submitting some challenges for him to complete.
+	\item If trusted, Bob receives the symmetric key to decrypt Alice's personal data.
+\end{itemize}
+
+Data is sent through POST requests over a channel which is assumed to be secure.
+
+Once the Trust Authority receives a request from the client, it checks the correct specification of the policy before proceeding to decrypt and verify the payload received. This operation is performed by a server-side parser which matches the XML file with a standard XSD grammar. In case of errors, no symmetric key is released.
+
+The specification of the XSD grammar can be found in Appendix \ref{appendixA}. 
+
+\subsection{Structure of an XML policy}
+The policy file is constructed by the data owner in order to specify which set of users can access her data. 
