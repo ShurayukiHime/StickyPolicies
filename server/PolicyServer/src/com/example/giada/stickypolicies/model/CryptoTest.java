@@ -11,7 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.Arrays;
 
-public class Test {
+public class CryptoTest {
 
 	public static void main(String[] args) throws IOException {
 		String fileName = "policy1.xml";
@@ -46,12 +46,13 @@ public class Test {
         } catch (DigestException e) {
             e.printStackTrace();
         }
+        int digestLength = CryptoUtilities.getDigestSize();
         System.out.println("Comparing two identical digests: " + 
         		CryptoUtilities.compareDigests(policyDigest, policyDigest2));
-        int digestLength = CryptoUtilities.getDigestSize();
         
         byte[] encodedSymmetricKey = CryptoUtilities.generateSymmetricRandomKey();
         int trueKeySize = encodedSymmetricKey.length;
+        
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream( );
         try {
             byteArrayOutputStream.write(encodedSymmetricKey);
@@ -136,6 +137,16 @@ public class Test {
 		System.out.println("SECOND METHOD - Size key: " + trueKeySize + " size true digest: " + digestLength + " size before encryption: " + sizeBefSecondEncy
 				+ " size encrypted key+digest: " + sizeSecondEncr + " size decrypted: " + sizeSecondDecr);
 		System.out.println("Size retrieved key: " + secondAllegedKeySize + " size retrieved digest: " + secondSizeRetrievedDigest);
+
+		byte[] policyEncrypted = CryptoUtilities.encryptSymmetric(encodedSymmetricKey, policyFile.getBytes(Charset.forName("UTF-8")));
+		int encryptedDataSize = policyEncrypted.length;
+		int cleartextSize = policyFile.getBytes(Charset.forName("UTF-8")).length;
+		
+		System.out.println("\nGenerated digest length: " + digestLength);
+		System.out.println("Generated key length: " + trueKeySize);
+		System.out.println("Asymmetric encryption of key + digest length: " + sizeFirstEncr);
+		System.out.println("Cleartext size: " + cleartextSize);
+		System.out.println("Encrypted data size: " + encryptedDataSize);
 	}
 
 }

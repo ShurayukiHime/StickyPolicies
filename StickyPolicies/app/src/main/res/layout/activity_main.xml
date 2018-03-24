@@ -29,7 +29,7 @@
 
         <Button
             android:id="@+id/switch_to_xml_parser"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             android:layout_marginStart="16dp"
@@ -39,12 +39,22 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
-            android:id="@+id/server_path"
-            android:layout_width="wrap_content"
+            android:id="@+id/share_pii_button"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             android:layout_marginStart="16dp"
-            android:text="@string/server_path"
+            android:text="@string/share_pii"
+            app:layout_constraintLeft_toLeftOf="parent"
+            tools:layout_editor_absoluteY="71dp" />
+
+        <Button
+            android:id="@+id/access_pii_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="16dp"
+            android:text="@string/access_pii"
             app:layout_constraintLeft_toLeftOf="parent"
             tools:layout_editor_absoluteY="71dp" />
     </LinearLayout>

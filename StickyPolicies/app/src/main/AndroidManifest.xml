@@ -21,6 +21,8 @@
         </activity>
         <activity android:name=".XmlParserActivity" />
         <activity android:name=".PolicyClient" />
+        <activity android:name=".ShareDataActivity" />
+        <activity android:name=".AccessDataActivity"></activity>
     </application>
 
 </manifest>

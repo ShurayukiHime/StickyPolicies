@@ -1,6 +1,8 @@
 package com.example.giada.stickypoliciesapp;
 
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -20,9 +22,7 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringWriter;
-import java.math.BigInteger;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.DigestException;
@@ -31,16 +31,14 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 
 public class PolicyClient extends AppCompatActivity {
 
     private TextView mUrlDisplayTextView;
-    private Button mObtainCertificateButton;
     private TextView mSearchResultsTextView;
-    private Button mSendPiiButton;
-    private Button mAccessPolicyButton;
+    private static TextView mDataShared;
+    private Button mAccessDataButton;
 
     private final static String TAG = PolicyClient.class.getSimpleName();
 
@@ -50,7 +48,8 @@ public class PolicyClient extends AppCompatActivity {
     final static String applicationJsonContentType = "application/json; charset=utf-8";
 
     private X509Certificate taCertificate;
-    private String pii = "this is some very personal data!";
+    private String pii;
+    private String policy;
     private EncryptedData bobsData;
 
     @Override
@@ -60,236 +59,161 @@ public class PolicyClient extends AppCompatActivity {
         Log.d(TAG, "entered policy client!");
 
         mUrlDisplayTextView = (TextView) findViewById(R.id.tv_url_display);
-        mSearchResultsTextView = (TextView) findViewById(R.id.tv_search_results_json);
+        mSearchResultsTextView = (TextView) findViewById(R.id.tv_search_results);
+        mDataShared = (TextView) findViewById(R.id.data_shared_title);
 
-        mObtainCertificateButton = (Button) findViewById(R.id.obtain_certificate_button);
-        mObtainCertificateButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "obtain certificate button Clicked!");
-                certificateRequest();
-            }
-        });
-
-        mSendPiiButton = (Button) findViewById(R.id.send_pii_button);
-        mSendPiiButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "send pii button Clicked!");
-                shareEncryptedData();
-            }
-        });
-
-        mAccessPolicyButton = (Button) findViewById(R.id.access_policy_button);
-        mAccessPolicyButton.setOnClickListener(new View.OnClickListener() {
+        mAccessDataButton = (Button) findViewById(R.id.access_data_button);
+        mAccessDataButton.setClickable(false);
+        mAccessDataButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "access encrypted data button Clicked!");
                 accessEncryptedData();
             }
         });
+
+        Bundle extrasBundle = getIntent().getExtras();
+        if (!extrasBundle.isEmpty() && extrasBundle.containsKey("string_pii")){
+            pii = (String) extrasBundle.get("string_pii");
+        }
+        if (!extrasBundle.isEmpty() && extrasBundle.containsKey("policy")){
+            policy = (String) extrasBundle.get("policy");
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        shareEncryptedData();
+        Toast.makeText(this.getApplicationContext(), "Please wait... Data is being shared...", Toast.LENGTH_SHORT).show();
     }
 
     private void accessEncryptedData() {
-        // suppose we received bobsData as Gson from Alice
-
-        // 2) contact TA and send stuff
-        EncryptedData taData = new EncryptedData(bobsData.getStickyPolicy(), bobsData.getKeyAndHashEncrypted(), bobsData.getSignedEncrkeyAndHash(), null);
-        Gson jsonData = new Gson();
-        String postData = jsonData.toJson(taData, EncryptedData.class);
-        URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "", "");
-        mUrlDisplayTextView.setText(serverURL.toString());
-        // 3) obtain key
-
-        //POSSIBLE IMPROVEMENT: BOB REGISTERS@TA AND KEY IS SENT ENCRYPTED WITH BOB'S PUBK
-
-        byte[] encodedSymmKey = new byte[0];
-        try {
-            encodedSymmKey = new SendEncryptedDataTask(postData).execute(serverURL).get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-            Log.d(TAG, "Error or refusal from Trusted Authority: " + e.getMessage());
-        }
-            //may not be the wisest solution
-        // 4) decryptSymmetric & profit
-        try {
-            byte[] decodedPii = CryptoUtils.decryptSymmetric(encodedSymmKey, bobsData.getEncryptedPii());
-            String pii = new String (decodedPii, Charset.forName("UTF-8"));
-            mSearchResultsTextView.append("Alice's personal data: " + pii + "\n");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        mDataShared.setVisibility(View.VISIBLE);
+        Log.d(TAG, "Access encrypted data button Clicked!");
+        Context context = PolicyClient.this;
+        Class destinationActivity = AccessDataActivity.class;
+        Intent accessDataIntent = new Intent(context, destinationActivity);
+        Bundle bundle = new Bundle();
+        Gson gson = new Gson();
+        bundle.putString("string_gson_data", gson.toJson(bobsData, EncryptedData.class));
+        accessDataIntent.putExtras(bundle);
+        startActivity(accessDataIntent);
     }
 
     private void shareEncryptedData() {
-        // 1) retrieve policy
-        String fileName = "policy1";
-        String policyFile = null;
-        InputStream ins = getResources().openRawResource(
-                getResources().getIdentifier(fileName, "raw", getPackageName()));
-        Scanner scanner = new Scanner(ins);
-        scanner.useDelimiter("\\A");
-        boolean hasInput = scanner.hasNext();
-        if (hasInput)
-            policyFile = scanner.next();
-        else
-            Log.d(TAG, "Empty file");
-        try {
-            ins.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.d(TAG, "Error closing input stream: " + e.getMessage());
-        }
-
-        PublicKey taPublicKey = null;
-        if(taCertificate == null) {
-            Log.d(TAG, "Certificate is null, creating a new one...");
-            Toast.makeText(this.getApplicationContext(), "Please wait... Cryptography is working for you!", Toast.LENGTH_LONG);
-            URL serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "action", "obtainTAcertificate");
-            mUrlDisplayTextView.setText(serverURL.toString());
-            try {
-                taCertificate = new GetTrustedAuthorityCertificateTask().execute(serverURL).get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-                Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
-            }
-        } else
-            Log.d(TAG, "Certificate not null");
-        taPublicKey = taCertificate.getPublicKey();
-
-
-        BigInteger dataOwnerCertSN = null;
-        //to execute this task I would normally need only my keypair, not the entire certificate
-        //but since I have to specify a SN in the policy, then also the certificate is generated
-        try {
-            X509Certificate dataOwnerCert = CryptoUtils.getCertificate();
-            dataOwnerCertSN = dataOwnerCert.getSerialNumber();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.d(TAG, "Error when generating Data Owner's certificate");
-        }
-        ////////////////////////////////////////
-        ///////////// ---- HARDCODED -- NOT GOOD
-        String[] fakeSN = policyFile.split("certificateSerialNumber");
-        String policy = fakeSN[0] + "certificateSerialNumber>" + dataOwnerCertSN + "</certificateSerialNumber" + fakeSN[2];
-        ///////////// ---- HARDCODED -- NOT GOOD
-        ////////////////////////////////////////
-
-        // 2) generate symmetric disposable encryption key
-        byte[] encodedSymmetricKey = CryptoUtils.generateSymmetricRandomKey();
-        // 3) encrypt PII
-        byte[] encryptedPii = CryptoUtils.encryptSymmetric(encodedSymmetricKey, pii.getBytes(Charset.forName("UTF-8")));
-        // 4) hash policy
-        byte[] policyDigest = new byte[0];
-        try {
-            policyDigest = CryptoUtils.calculateDigest(policy.getBytes(Charset.forName("UTF-8")));
-        } catch (DigestException e) {
-            e.printStackTrace();
-            Log.d(TAG, "Error calculating policy digest: " + e.getMessage());
-        }
-        // 5) append policy and  digest, encrypt with PubTa
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream( );
-        try {
-            byteArrayOutputStream.write(encodedSymmetricKey);
-            byteArrayOutputStream.write(policyDigest);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.d(TAG, "Error in concatenating policy and digest: " + e.getMessage());
-        }
-        byte[] keyAndHashEncrypted = CryptoUtils.encryptAsymmetric(taPublicKey, byteArrayOutputStream.toByteArray());
-
-        // 6) sign
-        byte[] signedEncrKeyAndHash = new byte[0];
-        try {
-            signedEncrKeyAndHash = CryptoUtils.sign(keyAndHashEncrypted);
-        } catch (SignatureException e) {
-            e.printStackTrace();
-            Log.d(TAG, "Error when signing data: " + e.getMessage());
-        }
-        try {
-            byteArrayOutputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.d(TAG, "Error when closing byte array output stream: " + e.getMessage());
-        }
-
-        // save or share somewhere somehow
-        bobsData = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, encryptedPii);
-        // TA doesn't receive pii
-            //1) bc the paper says so
-            //2) bc it'd introduce a weakness
-        EncryptedData data = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, null);
-        Gson jsonData = new Gson();
-        String postData = jsonData.toJson(data, EncryptedData.class);
-        // this url should be changed with Bob's address
-        URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "", "");
-        mUrlDisplayTextView.setText(serverURL.toString());
-        new SendEncryptedDataTask(postData).execute(serverURL);
-    }
-
-    private class EncryptedData {
-        private String stickyPolicy;
-        private byte[] keyAndHashEncrypted;
-        private byte[] signedEncrkeyAndHash;
-        private byte[] encryptedPii;
-
-        public EncryptedData() {
-        }
-
-        public EncryptedData(String stickyPolicy, byte[] keyAndHashEncrypted, byte[] signedEncrkeyAndHash, byte[] encryptedPii) {
-            this.stickyPolicy = stickyPolicy;
-            this.keyAndHashEncrypted = keyAndHashEncrypted;
-            this.signedEncrkeyAndHash = signedEncrkeyAndHash;
-            this.encryptedPii = encryptedPii;
-        }
-
-        public String getStickyPolicy() {
-            return stickyPolicy;
-        }
-
-        public void setStickyPolicy(String stickyPolicy) {
-            this.stickyPolicy = stickyPolicy;
-        }
-
-        public byte[] getKeyAndHashEncrypted() {
-            return keyAndHashEncrypted;
-        }
-
-        public void setKeyAndHashEncrypted(byte[] keyAndHashEncrypted) {
-            this.keyAndHashEncrypted = keyAndHashEncrypted;
-        }
-
-        public byte[] getSignedEncrkeyAndHash() {
-            return signedEncrkeyAndHash;
-        }
-
-        public void setSignedEncrkeyAndHash(byte[] signedEncrkeyAndHash) {
-            this.signedEncrkeyAndHash = signedEncrkeyAndHash;
-        }
-
-        public byte[] getEncryptedPii() {
-            return encryptedPii;
-        }
-
-        public void setEncryptedPii(byte[] encryptedPii) {
-            this.encryptedPii = encryptedPii;
-        }
-    }
-
-    private void certificateRequest() {
         URL serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "action", "obtainTAcertificate");
         mUrlDisplayTextView.setText(serverURL.toString());
-        new GetTrustedAuthorityCertificateTask().execute(serverURL);
+        try {
+            taCertificate = new GetTrustedAuthorityCertificateTask().execute(serverURL).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
 
         serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "", "");
         mUrlDisplayTextView.setText(serverURL.toString());
         new SendMyCertificateTask().execute(serverURL);
+
+        // 1) retrieve policy
+            // policy already retrieved in previous activity
+
+        byte[] encryptedPii = new byte[0];
+        byte[] keyAndHashEncrypted = new byte[0];
+        byte[] signedEncrKeyAndHash = new byte[0];
+        try {
+            PublicKey taPublicKey = null;
+            if (taCertificate == null) {
+                Log.d(TAG, "Certificate is null, creating a new one...");
+                serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "action", "obtainTAcertificate");
+                mUrlDisplayTextView.setText(serverURL.toString());
+                try {
+                    taCertificate = new GetTrustedAuthorityCertificateTask().execute(serverURL).get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
+                    throw new Exception ();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                    Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
+                    throw new Exception ();
+                }
+            } else
+                Log.d(TAG, "Certificate not null");
+            taPublicKey = taCertificate.getPublicKey();
+
+            // 2) generate symmetric disposable encryption key
+            byte[] encodedSymmetricKey = CryptoUtils.generateSymmetricRandomKey();
+            // 3) encrypt PII
+            encryptedPii = CryptoUtils.encryptSymmetric(encodedSymmetricKey, pii.getBytes(Charset.forName("UTF-8")));
+            // 4) hash policy
+            byte[] policyDigest = new byte[0];
+            try {
+                policyDigest = CryptoUtils.calculateDigest(policy.getBytes(Charset.forName("UTF-8")));
+            } catch (DigestException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error calculating policy digest: " + e.getMessage());
+                throw new Exception ();
+            }
+            // 5) append policy and  digest, encrypt with PubTa
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream( );
+            try {
+                byteArrayOutputStream.write(encodedSymmetricKey);
+                byteArrayOutputStream.write(policyDigest);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error in concatenating policy and digest: " + e.getMessage());
+                throw new Exception ();
+            }
+            keyAndHashEncrypted = CryptoUtils.encryptAsymmetric(taPublicKey, byteArrayOutputStream.toByteArray());
+
+            // 6) sign
+            signedEncrKeyAndHash = new byte[0];
+            try {
+                signedEncrKeyAndHash = CryptoUtils.sign(keyAndHashEncrypted);
+            } catch (SignatureException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error when signing data: " + e.getMessage());
+                throw new Exception ();
+            }
+            try {
+                byteArrayOutputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error when closing byte array output stream: " + e.getMessage());
+                throw new Exception ();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mSearchResultsTextView.setText("Sorry, some errors happened while encrypting your data.\nDon't worry, your privacy is still safe!\nPlease try again later.");
+            return;
+            // don't think this is the brightest idea ever...
+        }
+
+        // save or share somewhere somehow
+
+        bobsData = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, encryptedPii);
+        // TA doesn't receive pii
+            //1) bc the paper says so
+            //2) bc it'd introduce a weakness
+
+        // this part has been commented out because the TA shouldn't receive any data from the data owner
+        // it would make sense to integrate it back if we had a real bob and send it to him!
+        // anyway the code works pretty fine so it was a waste to delete it
+
+        /*EncryptedData data = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, null);
+        Gson jsonData = new Gson();
+        String postData = jsonData.toJson(data, EncryptedData.class);
+        URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "", "");
+        mUrlDisplayTextView.setText(serverURL.toString());
+        new SendEncryptedDataTask(postData).execute(serverURL)*/;
+
+        // since we don't send it to Bob, we pass the data to the new activity
+        mAccessDataButton.setClickable(true);
     }
 
-    public class SendEncryptedDataTask extends  AsyncTask<URL, Void, byte[]> {
+    public static class SendEncryptedDataTask extends  AsyncTask<URL, Void, byte[]> {
         String postData;
 
         protected SendEncryptedDataTask(String postData) {
@@ -309,12 +233,18 @@ public class PolicyClient extends AppCompatActivity {
             Gson gson = new Gson();
             return gson.fromJson(responseBody, byte[].class);
         }
+
+        @Override
+        protected void onPostExecute(byte[] bytes) {
+            mDataShared.setText("Data Shared successfully!");
+            super.onPostExecute(bytes);
+        }
     }
 
     public class SendMyCertificateTask extends  AsyncTask<URL, Void, String> {
         @Override
         protected void onPreExecute() {
-            // generate certificate here hoping to lighten computation afterwards
+            // should have already been generated in the previous activity
             try {
                 CryptoUtils.getCertificate();
             } catch (Exception e) {

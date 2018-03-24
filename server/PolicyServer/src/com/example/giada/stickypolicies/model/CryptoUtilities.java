@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.DigestException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
@@ -18,9 +19,13 @@ import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -189,5 +194,26 @@ public class CryptoUtilities {
         keyGen.init(256); // for example
         SecretKey secretKey = keyGen.generateKey();
         return secretKey.getEncoded();
+    }
+
+	public static byte[] encryptSymmetric(byte[] encodedSymmKey, byte[] clearText) {
+        SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
+        byte[] encryptedText = new byte[0];
+        try {
+            Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);
+            cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
+            encryptedText = cipher.doFinal(clearText);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
+        return encryptedText;
     }
 }
