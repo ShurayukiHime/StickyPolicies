@@ -37,7 +37,7 @@ public class PolicyClient extends AppCompatActivity {
 
     private TextView mUrlDisplayTextView;
     private TextView mSearchResultsTextView;
-    private static TextView mDataShared;
+    private TextView mDataShared;
     private Button mAccessDataButton;
 
     private final static String TAG = PolicyClient.class.getSimpleName();
@@ -89,8 +89,6 @@ public class PolicyClient extends AppCompatActivity {
     }
 
     private void accessEncryptedData() {
-        mDataShared.setVisibility(View.VISIBLE);
-        Log.d(TAG, "Access encrypted data button Clicked!");
         Context context = PolicyClient.this;
         Class destinationActivity = AccessDataActivity.class;
         Intent accessDataIntent = new Intent(context, destinationActivity);
@@ -102,17 +100,7 @@ public class PolicyClient extends AppCompatActivity {
     }
 
     private void shareEncryptedData() {
-        URL serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "action", "obtainTAcertificate");
-        mUrlDisplayTextView.setText(serverURL.toString());
-        try {
-            taCertificate = new GetTrustedAuthorityCertificateTask().execute(serverURL).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-
-        serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "", "");
+        URL serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "", "");
         mUrlDisplayTextView.setText(serverURL.toString());
         new SendMyCertificateTask().execute(serverURL);
 
@@ -124,23 +112,19 @@ public class PolicyClient extends AppCompatActivity {
         byte[] signedEncrKeyAndHash = new byte[0];
         try {
             PublicKey taPublicKey = null;
-            if (taCertificate == null) {
-                Log.d(TAG, "Certificate is null, creating a new one...");
-                serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "action", "obtainTAcertificate");
-                mUrlDisplayTextView.setText(serverURL.toString());
-                try {
-                    taCertificate = new GetTrustedAuthorityCertificateTask().execute(serverURL).get();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
-                    throw new Exception ();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                    Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
-                    throw new Exception ();
-                }
-            } else
-                Log.d(TAG, "Certificate not null");
+            serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "action", "obtainTAcertificate");
+            mUrlDisplayTextView.setText(serverURL.toString());
+            try {
+                taCertificate = new GetTrustedAuthorityCertificateTask().execute(serverURL).get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
+                throw new Exception();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
+                throw new Exception();
+            }
             taPublicKey = taCertificate.getPublicKey();
 
             // 2) generate symmetric disposable encryption key
@@ -210,6 +194,7 @@ public class PolicyClient extends AppCompatActivity {
         new SendEncryptedDataTask(postData).execute(serverURL)*/;
 
         // since we don't send it to Bob, we pass the data to the new activity
+        mDataShared.setVisibility(View.VISIBLE);
         mAccessDataButton.setClickable(true);
     }
 
@@ -236,7 +221,6 @@ public class PolicyClient extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(byte[] bytes) {
-            mDataShared.setText("Data Shared successfully!");
             super.onPostExecute(bytes);
         }
     }

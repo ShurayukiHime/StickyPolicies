@@ -58,6 +58,9 @@ limitations under the License.
         android:editable="false"
         android:ems="10"
         android:inputType="textPersonName"
+        android:text="Data shared successfully!"
         android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Title"
-        android:textColor="@color/colorAccent" />
+        android:textColor="@color/colorAccent"
+        android:textSize="24sp"
+        android:visibility="invisible" />
 </LinearLayout>

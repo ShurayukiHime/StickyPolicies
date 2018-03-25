@@ -43,10 +43,6 @@ public class ShareDataActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "Browse button Clicked!");
-                Context context = ShareDataActivity.this;
-                /*Class destinationActivity = ShareDataActivity.class;
-                Intent sharePii = new Intent(context, destinationActivity);
-                startActivity(sharePii);*/
                 performFileSearch();
             }
         });
