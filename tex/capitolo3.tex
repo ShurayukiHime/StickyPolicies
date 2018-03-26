@@ -1,36 +1,9 @@
-\chapter{Getting one's hands dirty}
+\chapter{A simple implementation}
 \label{chapter3}
 \thispagestyle{empty}
 
 \noindent First, we set up the necessary entities to implement \textit{Sticky Policies}: an Android client and a service provider. The client was developed using Android Studio and emulated through the Android Emulator with a Nexus 5X device running Android 7.0 and API level 24. The Trusted Authority was developed using Eclipse and run on Apache Tomcat 8; the communication was implemented through HTTP protocol.
 
-\section{Existing implementations and libraries}
-Nearly each of the possibilities considered in chapter \ref{chapter2} has a dedicated implementation. For Cyphertext-Policy Attribute-Based Encryption there is the \texttt{cpabe} toolkit \cite{bethencourt2011library}, available in the C language. This library provides an encryption scheme such that each private key is associated with a set of attributes rather than with the identity of the data owner. Attributes can be provided as strings from standard input or from a file; moreover, it is possible to combine more than one attribute or rule through predefined operators as 'and', 'or', '>', '<'.
-
-\subsection{Java Pairing Based Cryptography Library for IBE}
-For Identity-Based Encryption we can rely on the Java Pairing Based Cryptography Library \cite{ISCC:DecIov11}. Private keys are generated from identities alone as well as combined with attributes describing the authorized audience, and it is possible both do encrypt and sign data. Both \cite{ISCC:DecIov11} and \cite{bethencourt2011library} depend on the Pairing-Based Cryptography Library \cite{PBC2007Lynn}, developed in the C language.
-
-\lstinputlisting[caption={Java mock class for IBE implementation},label={AHIBEDIP10},language=java]{AHIBEDIP10.java}
-
-As shown in Listing \ref{AHIBEDIP10}, the private key is generated providing several strings in place of the data owner's identity. Different cyphertexts are produced using different attributes as a key, and the same \texttt{CipherParameters} are needed to decrypt correctly.
-
-The functions \texttt{encaps} and \texttt{decaps} provide encryption and decryption mechanisms. After practical experiments, it results that \cite{ISCC:DecIov11} is a proof-of-concept implementation and it is thus not suited for actual use. The main reasons behind this lay in the implementation of the aforementioned functions: in fact, the \texttt{encaps} function does not take any plaintext in input, but it is generated inside its body by the function \texttt{process()}. As we can see from Listing \ref{PairingKeyEncapsulationMechanism}, this function calls \texttt{processBlock} supplying as input an empty byte array instead of an actual input.
-
-\lstinputlisting[caption={Excerpt from PairingKeyEncapsulationMechanism class},label={PairingKeyEncapsulationMechanism},language=java]{PairingKeyEncapsulationMechanism.java}
-
-It is possible to modify the source code by opening a file, or supplying a run-time byte array containing the information to encrypt, and calling \texttt{processBlock} purposely:
-
-\lstinline[language=java]!return processBlock(dataArray, 0, dataArray.length);!
-
-To obtain the encrypted text it is also necessary to modify the last statement in the \texttt{processBlock} function called by \texttt{process}. In fact, as shown in the documentation for class \texttt{PairingAsymmetricBlockCipher}, the function \texttt{byte[] processBlock(byte[] in, int inOff, int inLen)} takes as second and third arguments the offset and the length of data, thus requiring an invocation like the following:
-
-\lstinline[language=java]!return processBlock(in, 0, in.length);!
-
-The complete content of the mentioned classes is available in Appendix \ref{appendixB}.
-
-After performing data encryption, though, the \texttt{Assert} statements to verify correct decryption fail, which leads us to think that this is only a proof-of-concept implementation. For this reason, and due to the unsuitableness of the available \cite{bethencourt2011library} and \cite{PBC2007Lynn} in the chosen context for this project, we have thus decided to proceed to the implementation of Sticky Policies with a hybrid cryptosystem.
-
-\section{Realizing a Hybrid Cryptosystem}
 In this solution, \textit{Sticky Policies} are realized via XML files and paired through the combination of symmetric and asymmetric cryptography with some personal data. This approach is presented in \cite{pearson2011sticky}, and an example XML policy was created taking as a reference the one presented in the same paper. Following this specification, we present a protocol for the communication of two Android clients, called for simplicity Alice and Bob. 
 
 Alice generates an XML policy to regulate data access, encrypting it with a symmetric key generated locally. The policy and the keys are then encrypted with the Trusted Authority's public key and signed by Alice. For this purpose, Alice should obtain the public key of the Trusted Authority and also a key pair for herself: in our solution, we use self-signed X509 Certificates generated by combining the Java Cryptography Architecture and the Bouncy Castle cryptography APIs for Java. Purposely, Alice contacts the Trusted Authority to obtain its public key, and shares her own if the Trusted Authority is not the issuer of the certificate itself.
@@ -49,5 +22,79 @@ Once the Trust Authority receives a request from the client, it checks the corre
 
 The specification of the XSD grammar can be found in Appendix \ref{appendixA}. 
 
-\subsection{Structure of an XML policy}
-The policy file is constructed by the data owner in order to specify which set of users can access her data. 
+\section{Program flow and architecture}
+implementation of the protocol, insert some images?
+
+
+Despite having described a protocol followed by Bob to obtain knowledge of Alice's personal data, we start by analysing the application flow before that data is shared, given that Alice has installed an instance of our StickyPolicyApp.
+
+The data owner can either share a simple text message or a regular file inside his phone, chosen through a picker. Consequently, the underlying application generates a fitting policy depending on the data shared and on the owner itself, which is then passed on to the next \texttt{Activity} for encryption and sharing.
+
+A certificate exchange is then initiated between the client and the server: this to perform both signature and encryption inside the app, and to allow the Trusted Authority to run security checks on data, when requested access by third parties. Subsequently, the policy and data are processed following the specification presented in \cite{mont2003towards}: the data is encrypted with a one-time-use symmetric key generated at the moment, and together with a digest of the policy they are first encrypted with the public key of the Trusted Authority, then signed with the data owner's private key.
+
+It is now possible for Alice to safely share her data, sending it to Bob. Data is transferred inside the body of POST requests in JSON form. To safely and efficiently perform data serialization and deserialization we used the \texttt{com.google.code.gson} library and implemented an ad-hoc private class to hold both policy and encrypted data in a single JSON Object. For this purpose, we tested also the libraries \texttt{org.json} and \texttt{org.jabsorb}, which though proved to be unsuitable and less efficient.
+
+Let's now consider the StickyPoliciesApp to be running on Bob's device, and to have just received a secret message from Alice. Bob forwards to the Trusted Authority the plaintext policy together with the signed key and digest, removing the encrypted personal data from the original payload. At this point, the Trusted Authority may check Bob's integrity and submit a few challenges to prove it, eventually disclosing the symmetric key to access Alice's secret message.
+
+Both the communication and the cryptographic primitives are performed inside \texttt{AsyncTask}s to keep the main UI thread separated and responsive.
+
+We have realized the Trusted Authority as a web server exposing two services, reachable via the corresponding servlets hosted in the servlet container Apache Tomcat.
+
+The first one is in charge of sharing the Trusted Authority's \texttt{X509Certificate} in \texttt{PEM} format, and it also manages the data owners which want to register to the TA. Also in this case, the certificates are to be sent in \texttt{PEM} format. This state is kept server-side inside the \texttt{ServletContext}, which is bound to the servlet's life cycle rather to the single user or session.
+
+The second service answers to data access requests: the servlet receives JSON Objects containing plaintext policies together with signed key and digest, and proceed checking the integrity of the policy, verifying the signature and decrypting the obtained data, to retrieve the symmetric key. If any of these procedures fails, the entire process is stopped and the access request is refused with an error code corresponding to the cause of the error (e.g. \texttt{403 Forbidden} in case the signature verification is not correct). In a future improved version of this app, the symmetric key could be encrypted with Bob's public key before sharing, requiring Bob to register at the Trusted Authority first. Other possible improvements include the implementation of policy-specified \texttt{action}s, as for example informing the data owner when data access is granted.
+
+As it is, our web server shows the same weaknesses we described in the previous chapter; moreover, additional weaknesses are introduced by the communication with a potential malicious client. In other words, no check is performed on the payload (content-type, dimension, user-agent) and the client is considered to be always trusted.
+
+\section{Structure of an XML policy}
+The policy file is constructed by the data owner in order to specify which set of users can access her data. Policies are shared over the internet as strings, thus formats like XML or JSON represent the best choice in terms of interoperability and ease of use. Choosing the XML format over a new, custom implementation for Sticky Policies enables the use of well-known corroborated libraries and best practices, available due to XML widespread. Moreover, the document format is designed for data transfer and to be self-descriptive: its structure and content can easily be regulated through grammars and specifications.
+
+Sticky Policies have been designed with a general and comprehensive structure, so as to allow broader usage than the one proposed in this solution. The main components of a Sticky Policy are the following:
+\begin{itemize}
+	\item List of the Trusted Authorities in which Bob can ask for data access. They are specified by Alice and they include all the servers in which she registered her certificate.
+	\item Details about the Data Owner, which are used server-side to retrieve the correct certificate and public key.
+	\item One or more policy, specifying fine-grained constraints about the attached data. They may vary in target, time validity, requirements, etc.; the complete specification is available in Appendix \ref{appendixA}.
+\end{itemize}
+
+\subsection{XML Validation and Parsing}
+Policies are parsed server side: this control step includes validation, i.e. checking both syntax and semantics of the document. In Java, it is possible to realize an XML parser through a \texttt{SAXParser}: this low-level implementation scans the whole document and for each start tag and end tag found fires and event, handled by a callback method to retrieve the content between the tags. While this allows to gain in efficiency and is suited also to parse large documents, it constitutes and ad-hoc tailored solution, unsuited for dynamic environments.
+
+Document parsing is performed by a \texttt{ContentHandler}, in which callback methods are defined: we chose to implement them via the subclass \texttt{DefaultHandler} and its methods \texttt{startElement}, \texttt{characters}, \texttt{endElement}.
+
+In our solution, we implemented also a \texttt{XMLErrorChecker} for error handling. This parser provides three different types of errors: fatal errors, errors and warnings, although by default only fatal errors are fired. In these cases, the parser cannot continue parsing and the method performs \texttt{System.exit(1)}, while nonfatal errors are generated when the document fails some validity constraints (e.g. invalid tag, tag not allowed...). We redefined the default behaviour by firing \texttt{SAXException}s also for nonfatal errors, due to the considerable importance of having a well-formed and valid document. These exceptions are then catched by the caller, at a higher level of the call stack, and handled by refusing the data disclosure request.
+
+
+\section{About cryptography}
+Cryptography constitutes a considerable part of the whole project. All cryptographic functions are realized as static, and accessible as if they were an external library both in the client and server. Both of them rely on the Java Cryptography Architecture together with Bouncy Castle APIs.
+
+\subsection{X509Certificates}
+The Bouncy Castle library provides functionalities to create self-signed X509 Certificates, chosen for the sake of simplicity. In a more realistic implementation, certificates should be issued by a Certification Authority, and the web server should additionally perform certificate verification (e.g. expiration and revocation). To construct the \texttt{X509Certificate}, we use 1024-bit asymmetric keys generated for the RSA algorithm, and the Bouncy Castle security provider. 2048-bit long keys could be more appropriate depending on the confidentiality of the information shared, on the mobile device and network possibilities.
+
+Both the certificates are constructed following the same instructions. In case the Trusted Authority works also as a Certification Authority, then 
+
+\lstinline[language=java]!BasicConstraints constraints = new BasicConstraints(true);!
+
+while for the mobile device we use a \texttt{false} parameter. Moreover, in both cases, certificates are created and handled as singleton objects, to prevent inappropriate certificate creation: the methods and fields to generate and store certificates are \texttt{private}, and their content can be retrieved through accessor methods, which also control the instance creation.
+
+Among the Bouncy Castle library there is the LightCrypto implementation \cite{LightCrypto}, available for phones or devices with limited computational power. It allows the creation of key pairs and certificates, but their interoperability with the Java Cryptography Architecture is limited so that a conventional certificate implementation is preferred. 
+
+Certificates are shared in PEM format using a \texttt{JcaPEMWriter} for serialization and a \texttt{CertificateFactory} for deserialization. This format has been preferred to ASN.1 as easier to send in a HTML request body, it being a \texttt{String} rather than a \texttt{byte[]}.
+
+\subsection{Message Digests}
+Computing message digests is an important part of this security protocol: first, it proves policy's integrity by matching the received digest with the one computed from the policy in cleartext; second, it contributes in giving a fixed size to the to-be-encrypted data. In fact, policy files can potentially grow in size and, were the policy not to be hashed before asymmetric encryption, it could introduce a weakness within RSA's encryption method. If the overall dimension of the symmetric key and policy were greater than the dimension of the modulus for asymmetric encryption, either the dimension of the modulus could be increased, or encryption had to be performed after splitting the whole data into blocks of size lower than 1024 bits.
+
+
+
+
+md5 algorithm and dimension
+
+symmetric key generation, symmetric key algorithm for encryption
+
+sign, verify, encrypt and decrypt with asymmetric keys, output dimension and security considerations 
+
+performance of the whole process, padding, salt, random generation in android
+
+
+\section{Performance}
+
+
