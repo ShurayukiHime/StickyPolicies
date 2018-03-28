@@ -48,7 +48,7 @@ limitations under the License.
                 android:id="@+id/manual_insert_share_data"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
+                android:textSize="18sp"
                 android:text="I cheated during last exam" />
         </ScrollView>
     </LinearLayout>

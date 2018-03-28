@@ -51,6 +51,7 @@ public class PolicyClient extends AppCompatActivity {
     private String pii;
     private String policy;
     private EncryptedData bobsData;
+    private boolean errors = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,7 +112,7 @@ public class PolicyClient extends AppCompatActivity {
         // 1) retrieve policy
             // policy already retrieved in previous activity
 
-        byte[] encryptedPii = new byte[0];
+        byte[] encrPiiAndIV = new byte[0];
         byte[] keyAndHashEncrypted = new byte[0];
         byte[] signedEncrKeyAndHash = new byte[0];
         try {
@@ -134,8 +135,9 @@ public class PolicyClient extends AppCompatActivity {
 
             // 2) generate symmetric disposable encryption key
             byte[] encodedSymmetricKey = CryptoUtils.generateSymmetricRandomKey();
+            byte[] initializationVec = CryptoUtils.generateSecureIV();
             // 3) encrypt PII
-            encryptedPii = CryptoUtils.encryptSymmetric(encodedSymmetricKey, pii.getBytes(Charset.forName("UTF-8")));
+            byte[] encryptedPii = CryptoUtils.encryptSymmetric(encodedSymmetricKey, initializationVec, pii.getBytes(Charset.forName("UTF-8")));
             // 4) hash policy
             byte[] policyDigest = new byte[0];
             try {
@@ -173,35 +175,41 @@ public class PolicyClient extends AppCompatActivity {
                 Log.d(TAG, "Error when closing byte array output stream: " + e.getMessage());
                 throw new Exception ();
             }
+            encrPiiAndIV = new byte[initializationVec.length + encryptedPii.length];
+            System.arraycopy(encryptedPii, 0, encrPiiAndIV, 0, encryptedPii.length);
+            System.arraycopy(initializationVec, 0, encrPiiAndIV, encryptedPii.length, initializationVec.length);
         } catch (Exception e) {
             e.printStackTrace();
             if (getTrustedAuthorityCertificateTask != null)
                     getTrustedAuthorityCertificateTask.cancel(true);
             sendMyCertificateTask.cancel(true);
             mSearchResultsTextView.setText("Sorry, some errors happened while encrypting your data.\nDon't worry, your privacy is still safe!\nPlease try again later.");
+            errors = true;
         }
-
         // save or share somewhere somehow
 
-        bobsData = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, encryptedPii);
-        // TA doesn't receive pii
+        if (!errors) {
+            bobsData = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, encrPiiAndIV);
+            // TA doesn't receive pii
             //1) bc the paper says so
             //2) bc it'd introduce a weakness
 
-        // this part has been commented out because the TA shouldn't receive any data from the data owner
-        // it would make sense to integrate it back if we had a real bob and send it to him!
-        // anyway the code works pretty fine so it was a waste to delete it
+            // this part has been commented out because the TA shouldn't receive any data from the data owner
+            // it would make sense to integrate it back if we had a real bob and send it to him!
+            // anyway the code works pretty fine so it was a waste to delete it
 
         /*EncryptedData data = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, null);
         Gson jsonData = new Gson();
         String postData = jsonData.toJson(data, EncryptedData.class);
         URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "", "");
         mUrlDisplayTextView.setText(serverURL.toString());
-        new SendEncryptedDataTask(postData).execute(serverURL)*/;
+        new SendEncryptedDataTask(postData).execute(serverURL)*/
+            ;
 
-        // since we don't send it to Bob, we pass the data to the new activity
-        mDataShared.setVisibility(View.VISIBLE);
-        mAccessDataButton.setClickable(true);
+            // since we don't send it to Bob, we pass the data to the new activity
+            mDataShared.setVisibility(View.VISIBLE);
+            mAccessDataButton.setClickable(true);
+        }
     }
 
     public static class SendEncryptedDataTask extends  AsyncTask<URL, Void, byte[]> {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.DigestException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -28,6 +29,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
@@ -53,7 +55,7 @@ public class CryptoUtilities {
 	
     private static String signatureAlgorithm = "MD5WithRSA";
     private static String keyGenerationAlgorithm = "AES";
-    private static String symmetricEncrAlgorithm = "AES_256/CBC/PKCS5PADDING";
+    private static String symmetricEncrAlgorithm = "AES/CBC/PKCS5PADDING";
     private static String digestAlgorithm = "SHA-256";
 
 	public static KeyPair getKeys() throws NoSuchAlgorithmException, NoSuchProviderException {
@@ -194,7 +196,7 @@ public class CryptoUtilities {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        keyGen.init(256); // for example
+        keyGen.init(128); // for example
         	// will fire error for "limited strength jurisdiction" or something
         	// because key is too long. try with 128 and it'll work...
         SecretKey secretKey = keyGen.generateKey();
@@ -218,12 +220,26 @@ public class CryptoUtilities {
         return sb.toString();
 	}
 	
-	public static byte[] encryptSymmetric(byte[] encodedSymmKey, byte[] clearText) {
+	public static byte[] generateSecureIV () {
+        Cipher cipher = null;
+        try {
+            cipher = Cipher.getInstance(symmetricEncrAlgorithm);
+        } catch ( NoSuchAlgorithmException | NoSuchPaddingException e) {
+            e.printStackTrace();
+            throw new SecurityException(e.getMessage());
+        }
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] iv = new byte[cipher.getBlockSize()];
+        secureRandom.nextBytes(iv);
+        return iv;
+    }
+	
+	public static byte[] encryptSymmetric(byte[] encodedSymmKey, byte[] iv, byte[] clearText) {
         SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, keyGenerationAlgorithm);
         byte[] encryptedText = new byte[0];
         try {
             Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
+            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, new IvParameterSpec(iv));
             encryptedText = cipher.doFinal(clearText);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -235,7 +251,18 @@ public class CryptoUtilities {
             e.printStackTrace();
         } catch (BadPaddingException e) {
             e.printStackTrace();
-        }
+        } catch (InvalidAlgorithmParameterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         return encryptedText;
+    }
+	
+	public static byte[] decryptSymmetric(byte[] encodedSymmKey, byte[] initializationVector, byte[] encryptedText) throws Exception {
+        SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
+        Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);
+        cipher.init(Cipher.DECRYPT_MODE, skeySpec, new IvParameterSpec(initializationVector));
+        byte[] decrypted = cipher.doFinal(encryptedText);
+        return decrypted;
     }
 }

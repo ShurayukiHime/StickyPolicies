@@ -9,7 +9,7 @@ class EncryptedData {
     private String stickyPolicy;
     private byte[] keyAndHashEncrypted;
     private byte[] signedEncrkeyAndHash;
-    private byte[] encryptedPii;
+    private byte[] encrPiiAndIV;
 
     public EncryptedData() {
     }
@@ -23,7 +23,7 @@ class EncryptedData {
         if (getClass() != obj.getClass())
             return false;
         EncryptedData other = (EncryptedData) obj;
-        if (!Arrays.equals(encryptedPii, other.encryptedPii))
+        if (!Arrays.equals(encrPiiAndIV, other.encrPiiAndIV))
             return false;
         if (!Arrays.equals(keyAndHashEncrypted, other.keyAndHashEncrypted))
             return false;
@@ -37,11 +37,11 @@ class EncryptedData {
         return true;
     }
 
-    public EncryptedData(String stickyPolicy, byte[] keyAndHashEncrypted, byte[] signedEncrkeyAndHash, byte[] encryptedPii) {
+    public EncryptedData(String stickyPolicy, byte[] keyAndHashEncrypted, byte[] signedEncrkeyAndHash, byte[] encrPiiAndIV) {
         this.stickyPolicy = stickyPolicy;
         this.keyAndHashEncrypted = keyAndHashEncrypted;
         this.signedEncrkeyAndHash = signedEncrkeyAndHash;
-        this.encryptedPii = encryptedPii;
+        this.encrPiiAndIV = encrPiiAndIV;
     }
 
     public String getStickyPolicy() {
@@ -68,11 +68,11 @@ class EncryptedData {
         this.signedEncrkeyAndHash = signedEncrkeyAndHash;
     }
 
-    public byte[] getEncryptedPii() {
-        return encryptedPii;
+    public byte[] getEncrPiiAndIV() {
+        return encrPiiAndIV;
     }
 
-    public void setEncryptedPii(byte[] encryptedPii) {
-        this.encryptedPii = encryptedPii;
+    public void setEncrPiiAndIV(byte[] encrPiiAndIV) {
+        this.encrPiiAndIV = encrPiiAndIV;
     }
 }

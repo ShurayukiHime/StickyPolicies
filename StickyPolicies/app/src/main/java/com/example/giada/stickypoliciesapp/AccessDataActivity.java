@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 public class AccessDataActivity extends AppCompatActivity {
@@ -21,6 +22,7 @@ public class AccessDataActivity extends AppCompatActivity {
 
     private TextView mUrlDisplayTextView;
     private TextView mSearchResultsTextView;
+    private int cipher_block_length = 16;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +53,7 @@ public class AccessDataActivity extends AppCompatActivity {
         // 3) obtain key
 
         //POSSIBLE IMPROVEMENT: BOB REGISTERS@TA AND KEY IS SENT ENCRYPTED WITH BOB'S PUBK
+        //MAY NOT BE A GOOD IDEA IF DATA IS LARGER THAN MODULUS?
 
         byte[] encodedSymmKey = new byte[0];
         try {
@@ -62,11 +65,16 @@ public class AccessDataActivity extends AppCompatActivity {
         //may not be the wisest solution
         // 4) decryptSymmetric & profit
         try {
-            byte[] decodedPii = CryptoUtils.decryptSymmetric(encodedSymmKey, bobsData.getEncryptedPii());
+            byte[] encrPiiAndIV = bobsData.getEncrPiiAndIV();
+            byte[] encryptedPii = Arrays.copyOfRange(encrPiiAndIV, 0, (encrPiiAndIV.length - cipher_block_length));
+            byte[] initVec = Arrays.copyOfRange(encrPiiAndIV, (encrPiiAndIV.length - cipher_block_length), encrPiiAndIV.length);
+            byte[] decodedPii = CryptoUtils.decryptSymmetric(encodedSymmKey, initVec, encryptedPii);
             String pii = new String (decodedPii, Charset.forName("UTF-8"));
             mSearchResultsTextView.append("Alice's personal data: " + pii + "\n");
         } catch (Exception e) {
             e.printStackTrace();
+            Log.d(TAG, "Error in decrypting personal data: " + e.getMessage());
+            mSearchResultsTextView.append("We're sorry, something went wrong.");
         }
     }
 }

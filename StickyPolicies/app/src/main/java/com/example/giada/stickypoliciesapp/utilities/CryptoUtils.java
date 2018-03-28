@@ -43,22 +43,23 @@ import javax.security.auth.x500.X500Principal;
 public class CryptoUtils {
 
     private static KeyPair keyPair;
-    private final static String CNUser = "Alice";
-    private static final String BC = org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME;
     private static X509Certificate certificate;
+    private static final String CNUser = "Alice";
+    private static final String bouncyCastleProviderName = org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME;
+    private static final String androidOpenSSLProviderName = "AndroidOpenSSL";
     private static String encryptionAlgorithm = "RSA";
     private static String anotherEncryptionAlgorithm = "RSA/ECB/PKCS1Padding";
-    private static String securityProvider = "BC";
     private static String signatureAlgorithm = "MD5WithRSA";
     private static String keyGenerationAlgorithm = "AES";
     private static int AES_KEY_SIZE = 256;
     private static String symmetricEncrAlgorithm = "AES/CBC/PKCS5Padding";
     private static String digestAlgorithm = "SHA-256";
+
     private final static String TAG = CryptoUtils.class.getSimpleName();
 
     private static void generateKeys() throws SecurityException {
         try {
-            KeyPairGenerator keygen = KeyPairGenerator.getInstance(encryptionAlgorithm, securityProvider);
+            KeyPairGenerator keygen = KeyPairGenerator.getInstance(encryptionAlgorithm, bouncyCastleProviderName);
             keygen.initialize(1024);
             keyPair = keygen.generateKeyPair();
         } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
@@ -77,7 +78,7 @@ public class CryptoUtils {
         Date validityEndDate = new Date(System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000);  // in 1 year
         String signatureAlgorithm = "SHA256WithRSA"; // <-- Use appropriate signature algorithm based on your keyPair algorithm.
 
-        ContentSigner contentSigner = new JcaContentSignerBuilder(signatureAlgorithm).setProvider(BC).build(keyPair.getPrivate());
+        ContentSigner contentSigner = new JcaContentSignerBuilder(signatureAlgorithm).setProvider(bouncyCastleProviderName).build(keyPair.getPrivate());
 
         JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(new X500Principal("CN="+CNUser), certSerialNumber, validityBeginDate, validityEndDate, new X500Principal("CN="+CNUser), keyPair.getPublic());
 
@@ -85,7 +86,7 @@ public class CryptoUtils {
         BasicConstraints basicConstraints = new BasicConstraints(false); // <-- true for CA, false for EndEntity
         certBuilder.addExtension(new ASN1ObjectIdentifier("2.5.29.19"), true, basicConstraints); // Basic Constraints is usually marked as critical.
 
-        certificate = new JcaX509CertificateConverter().setProvider(BC).getCertificate(certBuilder.build(contentSigner));
+        certificate = new JcaX509CertificateConverter().setProvider(bouncyCastleProviderName).getCertificate(certBuilder.build(contentSigner));
     }
 
     public static X509Certificate getCertificate() throws Exception {
@@ -170,6 +171,7 @@ public class CryptoUtils {
         return md.getDigestLength();
     }
 
+
     public static byte[] generateSymmetricRandomKey() {
         KeyGenerator keyGen = null;
         try {
@@ -183,15 +185,27 @@ public class CryptoUtils {
         return secretKey.getEncoded();
     }
 
-    public static byte[] encryptSymmetric(byte[] encodedSymmKey, byte[] clearText) {
+    public static byte[] generateSecureIV () {
+        Cipher cipher = null;
+        try {
+            cipher = Cipher.getInstance(symmetricEncrAlgorithm, androidOpenSSLProviderName);
+        } catch ( NoSuchAlgorithmException | NoSuchPaddingException | NoSuchProviderException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Error in generating initialization vector: " + e.getMessage());
+            throw new SecurityException(e.getMessage());
+        }
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] iv = new byte[cipher.getBlockSize()];
+        secureRandom.nextBytes(iv);
+        return iv;
+    }
+
+    public static byte[] encryptSymmetric(byte[] encodedSymmKey, byte[] initializationVector, byte[] clearText) {
         SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
         byte[] encryptedText = new byte[0];
         try {
-            Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm, "AndroidOpenSSL");
-            SecureRandom secureRandom = new SecureRandom();
-            byte[] iv = new byte[cipher.getBlockSize()];
-            secureRandom.nextBytes(iv);
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, new IvParameterSpec(iv));
+            Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm, androidOpenSSLProviderName);
+            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, new IvParameterSpec(initializationVector));
             encryptedText = cipher.doFinal(clearText);
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchProviderException e) {
             e.printStackTrace();
@@ -201,13 +215,10 @@ public class CryptoUtils {
         return encryptedText;
     }
 
-    public static byte[] decryptSymmetric(byte[] encodedSymmKey, byte[] encryptedText) throws Exception {
+    public static byte[] decryptSymmetric(byte[] encodedSymmKey, byte[] initializationVector, byte[] encryptedText) throws Exception {
         SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
-        Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);
-        SecureRandom secureRandom = new SecureRandom();
-        byte[] iv = new byte[cipher.getBlockSize()];
-        secureRandom.nextBytes(iv);
-        cipher.init(Cipher.DECRYPT_MODE, skeySpec, new IvParameterSpec(iv));
+        Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm, androidOpenSSLProviderName);
+        cipher.init(Cipher.DECRYPT_MODE, skeySpec, new IvParameterSpec(initializationVector));
         byte[] decrypted = cipher.doFinal(encryptedText);
         return decrypted;
     }

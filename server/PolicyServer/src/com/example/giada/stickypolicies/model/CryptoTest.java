@@ -13,6 +13,8 @@ import java.util.Arrays;
 
 public class CryptoTest {
 
+	private static int cipher_block_length = 16;
+
 	public static void main(String[] args) throws IOException {
 		String fileName = "policy1.xml";
         String policyFile = null;
@@ -37,8 +39,6 @@ public class CryptoTest {
         } finally {
             br.close();
         }
-        
-        System.out.println(CryptoUtilities.getAlgorithmsSecProv() + "\n\n");
 
         byte[] policyDigest = new byte[0];
         byte[] policyDigest2 = new byte[0];
@@ -140,7 +140,9 @@ public class CryptoTest {
 				+ " size encrypted key+digest: " + sizeSecondEncr + " size decrypted: " + sizeSecondDecr);
 		System.out.println("Size retrieved key: " + secondAllegedKeySize + " size retrieved digest: " + secondSizeRetrievedDigest);
 
-		byte[] policyEncrypted = CryptoUtilities.encryptSymmetric(encodedSymmetricKey, policyFile.getBytes(Charset.forName("UTF-8")));
+		byte[] iv = CryptoUtilities.generateSecureIV();
+		int ivSize = iv.length;
+		byte[] policyEncrypted = CryptoUtilities.encryptSymmetric(encodedSymmetricKey, iv, policyFile.getBytes(Charset.forName("UTF-8")));
 		int encryptedDataSize = policyEncrypted.length;
 		int cleartextSize = policyFile.getBytes(Charset.forName("UTF-8")).length;
 		
@@ -149,6 +151,28 @@ public class CryptoTest {
 		System.out.println("Asymmetric encryption of key + digest length: " + sizeFirstEncr);
 		System.out.println("Cleartext size: " + cleartextSize);
 		System.out.println("Encrypted data size: " + encryptedDataSize);
+		
+		byte[] encrPiiAndIV = new byte[iv.length + policyEncrypted.length];
+		System.arraycopy(policyEncrypted, 0, encrPiiAndIV, 0, policyEncrypted.length);
+		System.arraycopy(iv, 0, encrPiiAndIV, policyEncrypted.length, iv.length);
+        
+        byte[] encryptedPii = Arrays.copyOfRange(encrPiiAndIV, 0, (encrPiiAndIV.length - cipher_block_length));
+        byte[] initVec = Arrays.copyOfRange(encrPiiAndIV, (encrPiiAndIV.length - cipher_block_length), encrPiiAndIV.length);
+        byte[] decodedPii = null;
+		try {
+			decodedPii = CryptoUtilities.decryptSymmetric(encodedSymmetricKey, initVec, encryptedPii);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        String pii = new String (decodedPii, Charset.forName("UTF-8"));
+        boolean equalIVs = Arrays.equals(iv, initVec);
+        boolean equalEncr = Arrays.equals(encryptedPii, policyEncrypted);
+        boolean equalSize = cipher_block_length == iv.length;
+        
+        System.out.println("\n\nSize of iv: " + ivSize + ", size of tot: " + encrPiiAndIV.length);
+        System.out.println("\nEquals IVs? " + equalIVs + " Equals enc? " + equalEncr + " iv size equals? " + equalSize);
+        System.out.println(pii);
 
 	}
 
