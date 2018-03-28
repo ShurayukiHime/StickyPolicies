@@ -37,6 +37,8 @@ public class CryptoTest {
         } finally {
             br.close();
         }
+        
+        System.out.println(CryptoUtilities.getAlgorithmsSecProv() + "\n\n");
 
         byte[] policyDigest = new byte[0];
         byte[] policyDigest2 = new byte[0];
@@ -147,6 +149,7 @@ public class CryptoTest {
 		System.out.println("Asymmetric encryption of key + digest length: " + sizeFirstEncr);
 		System.out.println("Cleartext size: " + cleartextSize);
 		System.out.println("Encrypted data size: " + encryptedDataSize);
+
 	}
 
 }

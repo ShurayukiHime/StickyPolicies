@@ -56,6 +56,7 @@ public class XMLParserSAX extends DefaultHandler {
 				// 3) parse document
 				xmlReader.parse(fileName);
 			} else {
+				isValidXML(fileName);
 				xmlReader.parse(new InputSource(new StringReader(fileName)));
 			}
 		} catch (ParserConfigurationException e) {

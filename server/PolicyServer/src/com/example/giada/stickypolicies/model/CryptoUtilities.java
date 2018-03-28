@@ -11,6 +11,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.Provider;
+import java.security.Provider.Service;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
@@ -18,6 +20,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.Set;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -48,9 +51,9 @@ public class CryptoUtilities {
 	private static KeyPair taKeys;
 	private static X509Certificate taCertificate;
 	
-    private static String securityProvider = "BC";
     private static String signatureAlgorithm = "MD5WithRSA";
-    private static String symmetricEncrAlgorithm = "AES";
+    private static String keyGenerationAlgorithm = "AES";
+    private static String symmetricEncrAlgorithm = "AES_256/CBC/PKCS5PADDING";
     private static String digestAlgorithm = "SHA-256";
 
 	public static KeyPair getKeys() throws NoSuchAlgorithmException, NoSuchProviderException {
@@ -187,17 +190,36 @@ public class CryptoUtilities {
 	public static byte[] generateSymmetricRandomKey() {
         KeyGenerator keyGen = null;
         try {
-            keyGen = KeyGenerator.getInstance(symmetricEncrAlgorithm);
+            keyGen = KeyGenerator.getInstance(keyGenerationAlgorithm);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         keyGen.init(256); // for example
+        	// will fire error for "limited strength jurisdiction" or something
+        	// because key is too long. try with 128 and it'll work...
         SecretKey secretKey = keyGen.generateKey();
         return secretKey.getEncoded();
     }
 
+	public static String getAlgorithmsSecProv() {
+		KeyGenerator keyGen = null;
+		StringBuilder sb = new StringBuilder();
+        try {
+            keyGen = KeyGenerator.getInstance("AES");
+            Provider bc = keyGen.getProvider();
+            sb.append("Provider name: " + bc.getName() + "\n");
+            Set<Provider.Service> services = bc.getServices();
+            for (Service s : services) {
+            	sb.append(s.getAlgorithm() + " " + s.toString() + "\n");
+            }
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return sb.toString();
+	}
+	
 	public static byte[] encryptSymmetric(byte[] encodedSymmKey, byte[] clearText) {
-        SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
+        SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, keyGenerationAlgorithm);
         byte[] encryptedText = new byte[0];
         try {
             Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);

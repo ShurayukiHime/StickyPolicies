@@ -100,9 +100,13 @@ public class PolicyClient extends AppCompatActivity {
     }
 
     private void shareEncryptedData() {
+        SendMyCertificateTask sendMyCertificateTask;
+        GetTrustedAuthorityCertificateTask getTrustedAuthorityCertificateTask = null;
+        
         URL serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "", "");
         mUrlDisplayTextView.setText(serverURL.toString());
-        new SendMyCertificateTask().execute(serverURL);
+        sendMyCertificateTask = new SendMyCertificateTask();
+        sendMyCertificateTask.execute(serverURL);
 
         // 1) retrieve policy
             // policy already retrieved in previous activity
@@ -115,7 +119,8 @@ public class PolicyClient extends AppCompatActivity {
             serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "action", "obtainTAcertificate");
             mUrlDisplayTextView.setText(serverURL.toString());
             try {
-                taCertificate = new GetTrustedAuthorityCertificateTask().execute(serverURL).get();
+                getTrustedAuthorityCertificateTask = new GetTrustedAuthorityCertificateTask();
+                taCertificate = getTrustedAuthorityCertificateTask.execute(serverURL).get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
@@ -170,9 +175,10 @@ public class PolicyClient extends AppCompatActivity {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            if (getTrustedAuthorityCertificateTask != null)
+                    getTrustedAuthorityCertificateTask.cancel(true);
+            sendMyCertificateTask.cancel(true);
             mSearchResultsTextView.setText("Sorry, some errors happened while encrypting your data.\nDon't worry, your privacy is still safe!\nPlease try again later.");
-            return;
-            // don't think this is the brightest idea ever...
         }
 
         // save or share somewhere somehow

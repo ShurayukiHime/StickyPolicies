@@ -11,6 +11,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import java.math.BigInteger;
 import java.security.DigestException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -19,6 +20,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.X509Certificate;
@@ -30,6 +32,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
@@ -47,38 +50,17 @@ public class CryptoUtils {
     private static String anotherEncryptionAlgorithm = "RSA/ECB/PKCS1Padding";
     private static String securityProvider = "BC";
     private static String signatureAlgorithm = "MD5WithRSA";
-    private static String symmetricEncrAlgorithm = "AES";
+    private static String keyGenerationAlgorithm = "AES";
+    private static int AES_KEY_SIZE = 256;
+    private static String symmetricEncrAlgorithm = "AES/CBC/PKCS5Padding";
     private static String digestAlgorithm = "SHA-256";
     private final static String TAG = CryptoUtils.class.getSimpleName();
-
-    public static KeyPair getKeyPair() {
-        //maybe this is insecure?
-        if (keyPair == null)
-            generateKeys();
-        return keyPair;
-    }
 
     private static void generateKeys() throws SecurityException {
         try {
             KeyPairGenerator keygen = KeyPairGenerator.getInstance(encryptionAlgorithm, securityProvider);
             keygen.initialize(1024);
             keyPair = keygen.generateKeyPair();
-            /*PrivateKey priv = keyPair.getPrivate();
-            PublicKey pub = keyPair.getPublic();
-            byte[] privBytes = priv.getEncoded();
-            byte[] pubBytes = pub.getEncoded();
-
-
-            // encode private in PKCS1 if needed
-            PrivateKeyInfo pkInfo = PrivateKeyInfo.getInstance(privBytes);
-            ASN1Encodable encodable = pkInfo.parsePrivateKey();
-            ASN1Primitive privPrimitive = encodable.toASN1Primitive();
-            byte[] privateKeyPKCS1 = privPrimitive.getEncoded();
-
-            // encode public in PKCS1 if needed
-            SubjectPublicKeyInfo spkInfo = SubjectPublicKeyInfo.getInstance(pubBytes);
-            ASN1Primitive prubPrimitive = spkInfo.parsePublicKey();
-            publicKeyPKCS1 = prubPrimitive.getEncoded();*/
         } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
             e.printStackTrace();
             throw new SecurityException(e.getMessage());
@@ -191,12 +173,12 @@ public class CryptoUtils {
     public static byte[] generateSymmetricRandomKey() {
         KeyGenerator keyGen = null;
         try {
-            keyGen = KeyGenerator.getInstance(symmetricEncrAlgorithm);
+            keyGen = KeyGenerator.getInstance(keyGenerationAlgorithm);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             Log.d(TAG, "Error in generating the symmetric random key: " + e.getMessage());
         }
-        keyGen.init(256); // for example
+        keyGen.init(AES_KEY_SIZE);
         SecretKey secretKey = keyGen.generateKey();
         return secretKey.getEncoded();
     }
@@ -205,19 +187,16 @@ public class CryptoUtils {
         SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
         byte[] encryptedText = new byte[0];
         try {
-            Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
+            Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm, "AndroidOpenSSL");
+            SecureRandom secureRandom = new SecureRandom();
+            byte[] iv = new byte[cipher.getBlockSize()];
+            secureRandom.nextBytes(iv);
+            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, new IvParameterSpec(iv));
             encryptedText = cipher.doFinal(clearText);
-        } catch (NoSuchAlgorithmException e) {
+        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchProviderException e) {
             e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
+            Log.d(TAG, "Error in symmetric encryption: " + e.getMessage());
+            throw new SecurityException(e.getMessage());
         }
         return encryptedText;
     }
@@ -225,7 +204,10 @@ public class CryptoUtils {
     public static byte[] decryptSymmetric(byte[] encodedSymmKey, byte[] encryptedText) throws Exception {
         SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
         Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);
-        cipher.init(Cipher.DECRYPT_MODE, skeySpec);
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] iv = new byte[cipher.getBlockSize()];
+        secureRandom.nextBytes(iv);
+        cipher.init(Cipher.DECRYPT_MODE, skeySpec, new IvParameterSpec(iv));
         byte[] decrypted = cipher.doFinal(encryptedText);
         return decrypted;
     }

@@ -13,6 +13,9 @@ import android.widget.Button;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.security.Provider;
+import java.security.Security;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -49,6 +52,15 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(sharePii);
             }
         });
+
+        Provider[] providers = Security.getProviders();
+        for (Provider provider : providers) {
+            Log.i("CRYPTO","provider: "+provider.getName());
+            Set<Provider.Service> services = provider.getServices();
+            for (Provider.Service service : services) {
+                Log.i("CRYPTO","  algorithm: "+service.getAlgorithm());
+            }
+        }
     }
 
     private void saveToInternalStorage() {
