@@ -25,4 +25,14 @@ public class ParsingUtils {
 
         return modifiedDocument;
     }
+
+    public static String getTagContent (String text, String targetXmlTag) {
+        ////////////////////////////////////////
+        ///////////// ---- HARDCODED -- NOT GOOD
+        String[] splitDocument = text.split(targetXmlTag);
+        String result = splitDocument[1].replaceAll("(<|>|/)", "");
+        ///////////// ---- HARDCODED -- NOT GOOD
+        ////////////////////////////////////////
+        return result;
+    }
 }

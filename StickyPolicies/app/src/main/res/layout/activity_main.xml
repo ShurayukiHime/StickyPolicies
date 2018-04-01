@@ -28,17 +28,6 @@
         tools:layout_constraintTop_creator="1">
 
         <Button
-            android:id="@+id/switch_to_xml_parser"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:text="@string/parse_a_sticky_policy"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <Button
             android:id="@+id/share_pii_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

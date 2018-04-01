@@ -21,6 +21,7 @@ limitations under the License.
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="16dp"
     tools:context="com.example.giada.stickypoliciesapp.PolicyClient">
 
     <Button
@@ -39,8 +40,9 @@ limitations under the License.
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="342dp"
-        android:layout_marginTop="16dp">
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_weight="1">
 
         <TextView
             android:id="@+id/tv_search_results"
@@ -57,10 +59,14 @@ limitations under the License.
         android:layout_marginTop="8dp"
         android:editable="false"
         android:ems="10"
+        android:gravity="center_horizontal"
         android:inputType="textPersonName"
         android:text="Data shared successfully!"
+        android:textAlignment="center"
         android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Title"
         android:textColor="@color/colorAccent"
         android:textSize="26sp"
         android:visibility="invisible" />
-</LinearLayout>
+
+
+    </LinearLayout>

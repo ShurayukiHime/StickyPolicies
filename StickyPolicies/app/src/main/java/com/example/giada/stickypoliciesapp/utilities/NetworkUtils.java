@@ -30,7 +30,9 @@ import java.util.Scanner;
 
 public class NetworkUtils {
 
-    final static String MY_BASE_URL ="10.0.2.2:8080";
+    final static String MY_BASE_URL =
+            //"10.0.2.2:8080";
+                "192.168.1.3:8080"; // debug from device, discover with ipconfig
     final static String MY_SERVER_DOMAIN = "PolicyServer";
     private final static String TAG = NetworkUtils.class.getSimpleName();
 

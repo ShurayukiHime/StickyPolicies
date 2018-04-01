@@ -48,7 +48,7 @@ public class PolicyClient extends AppCompatActivity {
     final static String applicationJsonContentType = "application/json; charset=utf-8";
 
     private X509Certificate taCertificate;
-    private String pii;
+    private byte[] pii;
     private String policy;
     private EncryptedData bobsData;
     private boolean errors = false;
@@ -75,7 +75,11 @@ public class PolicyClient extends AppCompatActivity {
 
         Bundle extrasBundle = getIntent().getExtras();
         if (!extrasBundle.isEmpty() && extrasBundle.containsKey("string_pii")){
-            pii = (String) extrasBundle.get("string_pii");
+            String tmp_pii = (String) extrasBundle.get("string_pii");
+            pii = tmp_pii.getBytes(Charset.forName("UTF-8"));
+        }
+        if (!extrasBundle.isEmpty() && extrasBundle.containsKey("image_pii")) {
+            pii = extrasBundle.getByteArray("image_pii");
         }
         if (!extrasBundle.isEmpty() && extrasBundle.containsKey("policy")){
             policy = (String) extrasBundle.get("policy");
@@ -95,8 +99,11 @@ public class PolicyClient extends AppCompatActivity {
         Intent accessDataIntent = new Intent(context, destinationActivity);
         Bundle bundle = new Bundle();
         Gson gson = new Gson();
+        String tmp = gson.toJson(bobsData, EncryptedData.class);
+        Log.d(TAG, "String length: " + tmp.length());
         bundle.putString("string_gson_data", gson.toJson(bobsData, EncryptedData.class));
         accessDataIntent.putExtras(bundle);
+        Log.d(TAG, "Starting access activity...");
         startActivity(accessDataIntent);
     }
 
@@ -137,7 +144,7 @@ public class PolicyClient extends AppCompatActivity {
             byte[] encodedSymmetricKey = CryptoUtils.generateSymmetricRandomKey();
             byte[] initializationVec = CryptoUtils.generateSecureIV();
             // 3) encrypt PII
-            byte[] encryptedPii = CryptoUtils.encryptSymmetric(encodedSymmetricKey, initializationVec, pii.getBytes(Charset.forName("UTF-8")));
+            byte[] encryptedPii = CryptoUtils.encryptSymmetric(encodedSymmetricKey, initializationVec, pii);
             // 4) hash policy
             byte[] policyDigest = new byte[0];
             try {

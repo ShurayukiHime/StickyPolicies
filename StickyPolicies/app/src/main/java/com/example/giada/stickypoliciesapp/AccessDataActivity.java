@@ -1,12 +1,16 @@
 package com.example.giada.stickypoliciesapp;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.giada.stickypoliciesapp.utilities.CryptoUtils;
 import com.example.giada.stickypoliciesapp.utilities.NetworkUtils;
+import com.example.giada.stickypoliciesapp.utilities.ParsingUtils;
 import com.google.gson.Gson;
 
 import java.net.URL;
@@ -22,26 +26,58 @@ public class AccessDataActivity extends AppCompatActivity {
 
     private TextView mUrlDisplayTextView;
     private TextView mSearchResultsTextView;
+    private ImageView mImageView;
     private int cipher_block_length = 16;
+    byte[] pii;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "OnCreate!");
         setContentView(R.layout.activity_access_data);
 
         mSearchResultsTextView = (TextView) findViewById(R.id.tv_search_results);
         mUrlDisplayTextView = (TextView) findViewById(R.id.tv_url_display);
-
-        Bundle extrasBundle = getIntent().getExtras();
-        Gson gson = new Gson();
-        if (!extrasBundle.isEmpty() && extrasBundle.containsKey("string_gson_data")){
-            bobsData = gson.fromJson((String) extrasBundle.get("string_gson_data"), EncryptedData.class);
-        }
-
-        accessEncryptedData();
+        mImageView = (ImageView) findViewById(R.id.shared_secret_img);
     }
 
-    private void accessEncryptedData() {
+    private void showText(byte[] pii) {
+        String stringPii = new String (pii, Charset.forName("UTF-8"));
+        mSearchResultsTextView.append("Alice's personal data: " + stringPii + "\n");
+    }
+
+    private void showPicture(byte[] pii) {
+        Bitmap bitmap = BitmapFactory.decodeByteArray(pii, 0, pii.length);
+        mImageView.setImageBitmap(bitmap);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "Stuck in onStart!");
+        Bundle extrasBundle = getIntent().getExtras();
+        Gson gson = new Gson();
+        if (!extrasBundle.isEmpty() && extrasBundle.containsKey("string_gson_data")) {
+            bobsData = gson.fromJson((String) extrasBundle.get("string_gson_data"), EncryptedData.class);
+            pii = accessEncryptedData();
+            String policy = bobsData.getStickyPolicy();
+            String dataType = ParsingUtils.getTagContent(policy, ParsingUtils.DATA_TYPE_TAG);
+            switch (dataType) {
+                case ParsingUtils.DATA_TYPE_PICTURE:
+                    showPicture(pii);
+                    break;
+                case ParsingUtils.DATA_TYPE_TEXT:
+                    showText(pii);
+                    break;
+            }
+        }
+        if (bobsData == null) {
+            mUrlDisplayTextView.setText("No data received, or data received was corrupted. Please try again.");
+            Log.d(TAG, "Received data is null.");
+        }
+    }
+
+    private byte[] accessEncryptedData() {
         // suppose we received bobsData as Gson from Alice
 
         // 2) contact TA and send stuff
@@ -69,12 +105,12 @@ public class AccessDataActivity extends AppCompatActivity {
             byte[] encryptedPii = Arrays.copyOfRange(encrPiiAndIV, 0, (encrPiiAndIV.length - cipher_block_length));
             byte[] initVec = Arrays.copyOfRange(encrPiiAndIV, (encrPiiAndIV.length - cipher_block_length), encrPiiAndIV.length);
             byte[] decodedPii = CryptoUtils.decryptSymmetric(encodedSymmKey, initVec, encryptedPii);
-            String pii = new String (decodedPii, Charset.forName("UTF-8"));
-            mSearchResultsTextView.append("Alice's personal data: " + pii + "\n");
+            return decodedPii;
         } catch (Exception e) {
             e.printStackTrace();
             Log.d(TAG, "Error in decrypting personal data: " + e.getMessage());
             mSearchResultsTextView.append("We're sorry, something went wrong.");
+            return null;
         }
     }
 }
