@@ -63,13 +63,13 @@ Nearly each of the possibilities considered in chapter \ref{chapter2} has a dedi
 \subsection{Java Pairing Based Cryptography Library for IBE}
 For Identity-Based Encryption we can rely on the Java Pairing Based Cryptography Library \cite{ISCC:DecIov11}. Private keys are generated from identities alone as well as combined with attributes describing the authorized audience, and it is possible both do encrypt and sign data. Both \cite{ISCC:DecIov11} and \cite{bethencourt2011library} depend on the Pairing-Based Cryptography Library \cite{PBC2007Lynn}, developed in the C language.
 
-\lstinputlisting[caption={Java mock class for IBE implementation},label={AHIBEDIP10},language=java]{AHIBEDIP10.java}
+\lstinputlisting[caption={Java mock class for IBE implementation},label={list:AHIBEDIP10},language=java]{AHIBEDIP10.java}
 
-As shown in Listing \ref{AHIBEDIP10}, the private key is generated providing several strings in place of the data owner's identity. Different cyphertexts are produced using different attributes as a key, and the same \texttt{CipherParameters} are needed to decrypt correctly.
+As shown in Listing \ref{list:AHIBEDIP10}, the private key is generated providing several strings in place of the data owner's identity. Different cyphertexts are produced using different attributes as a key, and the same \texttt{CipherParameters} are needed to decrypt correctly.
 
-The functions \texttt{encaps} and \texttt{decaps} provide encryption and decryption mechanisms. After practical experiments, it results that \cite{ISCC:DecIov11} is a proof-of-concept implementation and it is thus not suited for actual use. The main reasons behind this lay in the implementation of the aforementioned functions: in fact, the \texttt{encaps} function does not take any plaintext in input, but it is generated inside its body by the function \texttt{process()}. As we can see from Listing \ref{PairingKeyEncapsulationMechanism}, this function calls \texttt{processBlock} supplying as input an empty byte array instead of an actual input.
+The functions \texttt{encaps} and \texttt{decaps} provide encryption and decryption mechanisms. After practical experiments, it results that \cite{ISCC:DecIov11} is a proof-of-concept implementation and it is thus not suited for actual use. The main reasons behind this lay in the implementation of the aforementioned functions: in fact, the \texttt{encaps} function does not take any plaintext in input, but it is generated inside its body by the function \texttt{process()}. As we can see from Listing \ref{list:PairingKeyEncapsulationMechanism}, this function calls \texttt{processBlock} supplying as input an empty byte array instead of an actual input.
 
-\lstinputlisting[caption={Excerpt from PairingKeyEncapsulationMechanism class},label={PairingKeyEncapsulationMechanism},language=java]{PairingKeyEncapsulationMechanism.java}
+\lstinputlisting[caption={Excerpt from PairingKeyEncapsulationMechanism class},label={list:PairingKeyEncapsulationMechanism},language=java]{PairingKeyEncapsulationMechanism.java}
 
 It is possible to modify the source code by opening a file, or supplying a run-time byte array containing the information to encrypt, and calling \texttt{processBlock} purposely:
 
