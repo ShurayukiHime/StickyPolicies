@@ -11,7 +11,6 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.giada.stickypoliciesapp.utilities.CryptoUtils;
 import com.example.giada.stickypoliciesapp.utilities.NetworkUtils;
@@ -32,6 +31,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.ExecutionException;
+
+import javax.crypto.Cipher;
 
 public class PolicyClient extends AppCompatActivity {
 
@@ -90,7 +91,6 @@ public class PolicyClient extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         shareEncryptedData();
-        Toast.makeText(this.getApplicationContext(), "Please wait... Data is being shared...", Toast.LENGTH_SHORT).show();
     }
 
     private void accessEncryptedData() {
@@ -108,13 +108,9 @@ public class PolicyClient extends AppCompatActivity {
     }
 
     private void shareEncryptedData() {
-        SendMyCertificateTask sendMyCertificateTask;
-        GetTrustedAuthorityCertificateTask getTrustedAuthorityCertificateTask = null;
-        
         URL serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "", "");
         mUrlDisplayTextView.setText(serverURL.toString());
-        sendMyCertificateTask = new SendMyCertificateTask();
-        sendMyCertificateTask.execute(serverURL);
+        new SendMyCertificateTask().execute(serverURL);
 
         // 1) retrieve policy
             // policy already retrieved in previous activity
@@ -127,8 +123,7 @@ public class PolicyClient extends AppCompatActivity {
             serverURL = NetworkUtils.buildUrl(OBTAIN_CERT_PATH, "action", "obtainTAcertificate");
             mUrlDisplayTextView.setText(serverURL.toString());
             try {
-                getTrustedAuthorityCertificateTask = new GetTrustedAuthorityCertificateTask();
-                taCertificate = getTrustedAuthorityCertificateTask.execute(serverURL).get();
+                taCertificate = new GetTrustedAuthorityCertificateTask().execute(serverURL).get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Log.d(TAG, "Error in retrieving certificate: " + e.getMessage());
@@ -144,7 +139,7 @@ public class PolicyClient extends AppCompatActivity {
             byte[] encodedSymmetricKey = CryptoUtils.generateSymmetricRandomKey();
             byte[] initializationVec = CryptoUtils.generateSecureIV();
             // 3) encrypt PII
-            byte[] encryptedPii = CryptoUtils.encryptSymmetric(encodedSymmetricKey, initializationVec, pii);
+            byte[] encryptedPii = CryptoUtils.encrDecrSymmetric(Cipher.ENCRYPT_MODE, encodedSymmetricKey, initializationVec, pii);
             // 4) hash policy
             byte[] policyDigest = new byte[0];
             try {
@@ -187,9 +182,7 @@ public class PolicyClient extends AppCompatActivity {
             System.arraycopy(initializationVec, 0, encrPiiAndIV, encryptedPii.length, initializationVec.length);
         } catch (Exception e) {
             e.printStackTrace();
-            if (getTrustedAuthorityCertificateTask != null)
-                    getTrustedAuthorityCertificateTask.cancel(true);
-            sendMyCertificateTask.cancel(true);
+            mSearchResultsTextView.setText("");
             mSearchResultsTextView.setText("Sorry, some errors happened while encrypting your data.\nDon't worry, your privacy is still safe!\nPlease try again later.");
             errors = true;
         }
@@ -205,13 +198,12 @@ public class PolicyClient extends AppCompatActivity {
             // it would make sense to integrate it back if we had a real bob and send it to him!
             // anyway the code works pretty fine so it was a waste to delete it
 
-        /*EncryptedData data = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, null);
-        Gson jsonData = new Gson();
-        String postData = jsonData.toJson(data, EncryptedData.class);
-        URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "", "");
-        mUrlDisplayTextView.setText(serverURL.toString());
-        new SendEncryptedDataTask(postData).execute(serverURL)*/
-            ;
+            /*EncryptedData data = new EncryptedData(policy, keyAndHashEncrypted, signedEncrKeyAndHash, null);
+            Gson jsonData = new Gson();
+            String postData = jsonData.toJson(data, EncryptedData.class);
+            URL serverURL = NetworkUtils.buildUrl(BOB_URL, "", "");
+            mUrlDisplayTextView.setText(serverURL.toString());
+            new SendEncryptedDataTask(postData).execute(serverURL);*/
 
             // since we don't send it to Bob, we pass the data to the new activity
             mDataShared.setVisibility(View.VISIBLE);

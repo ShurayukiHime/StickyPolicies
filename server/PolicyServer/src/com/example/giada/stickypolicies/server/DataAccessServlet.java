@@ -117,7 +117,7 @@ public class DataAccessServlet extends HttpServlet {
 						dataOwnerCertificate.getPublicKey(),
 						signedEncrKeyAndHash, keyAndHashEncrypted);
 				// transmit alleged encrypted symmetric key
-				if (!(correctTASignature)) {
+				if (!correctTASignature) {
 					endConnection(response, HttpServletResponse.SC_FORBIDDEN, "Data Owner's signature didn't match. Suspected forgery.");
 					return;
 				}

@@ -78,7 +78,6 @@ public class ShareDataActivity extends AppCompatActivity {
 
                 // needs generalization
                 BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
-
                 if (drawable != null) {
                     Bitmap bitmap = drawable.getBitmap();
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -86,15 +85,14 @@ public class ShareDataActivity extends AppCompatActivity {
                     byte[] byteArray = stream.toByteArray();
                     bundle.putByteArray("image_pii", byteArray);
                     policy = ParsingUtils.correctPolicyFile(policy, ParsingUtils.DATA_TYPE_TAG, ParsingUtils.DATA_TYPE_PICTURE);
-                    bundle.putString("policy", policy);
                 } else{
                     String text = mTextToShare.getText() + "";
                     if (!text.isEmpty()) {
                         bundle.putString("string_pii", mTextToShare.getText() + "");
                         policy = ParsingUtils.correctPolicyFile(policy, ParsingUtils.DATA_TYPE_TAG, ParsingUtils.DATA_TYPE_TEXT);
-                        bundle.putString("policy", policy);
                     }
                 }
+                bundle.putString("policy", policy);
                 sharePii.putExtras(bundle);
                 startActivity(sharePii);
             }

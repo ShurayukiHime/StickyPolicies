@@ -1,5 +1,8 @@
 package com.example.giada.stickypoliciesapp.utilities;
 
+import android.annotation.TargetApi;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -24,6 +27,7 @@ import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.X509Certificate;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Date;
 
 import javax.crypto.BadPaddingException;
@@ -32,6 +36,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
@@ -44,22 +49,30 @@ public class CryptoUtils {
 
     private static KeyPair keyPair;
     private static X509Certificate certificate;
+    private static SecureRandom secureRandom = new SecureRandom();
     private static final String CNUser = "Alice";
     private static final String bouncyCastleProviderName = org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME;
     private static final String androidOpenSSLProviderName = "AndroidOpenSSL";
-    private static String encryptionAlgorithm = "RSA";
-    private static String anotherEncryptionAlgorithm = "RSA/ECB/PKCS1Padding";
+
+    private static String asymmKeyGenAlg = "RSA";
+    private static String asymmEncrAlg = "RSA/ECB/PKCS1Padding";
     private static String signatureAlgorithm = "MD5WithRSA";
-    private static String keyGenerationAlgorithm = "AES";
+
     private static int AES_KEY_SIZE = 256;
-    private static String symmetricEncrAlgorithm = "AES/CBC/PKCS5Padding";
+    private static String symmKeyGenAlg = "AES";
+    private static String symmEncrAlg = "AES/CBC/PKCS5Padding";
+
+    private static String gcmEncrAlg = "AES/GCM/NoPadding";
+    private static int GCM_NONCE_LENGTH = 12; // in bytes
+    private static int GCM_TAG_LENGTH = 16; // in bytes
+
     private static String digestAlgorithm = "SHA-256";
 
     private final static String TAG = CryptoUtils.class.getSimpleName();
 
     private static void generateKeys() throws SecurityException {
         try {
-            KeyPairGenerator keygen = KeyPairGenerator.getInstance(encryptionAlgorithm, bouncyCastleProviderName);
+            KeyPairGenerator keygen = KeyPairGenerator.getInstance(asymmKeyGenAlg, bouncyCastleProviderName);
             keygen.initialize(1024);
             keyPair = keygen.generateKeyPair();
         } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
@@ -127,7 +140,7 @@ public class CryptoUtils {
     public static byte[] encryptAsymmetric (Key publicKey, byte[] plaintext) {
         byte[] encodedBytes = null;
         try {
-            Cipher c = Cipher.getInstance(anotherEncryptionAlgorithm);
+            Cipher c = Cipher.getInstance(asymmEncrAlg);
             c.init(Cipher.ENCRYPT_MODE, publicKey);
             encodedBytes = c.doFinal(plaintext);
         } catch (Exception e) {
@@ -139,7 +152,7 @@ public class CryptoUtils {
     public static byte[] decryptAsymmetric (Key privateKey, byte[] encodedBytes) {
         byte[] decodedBytes = null;
         try {
-            Cipher c = Cipher.getInstance(anotherEncryptionAlgorithm);
+            Cipher c = Cipher.getInstance(asymmEncrAlg);
             c.init(Cipher.DECRYPT_MODE, privateKey);
             decodedBytes = c.doFinal(encodedBytes);
         } catch (Exception e) {
@@ -171,11 +184,10 @@ public class CryptoUtils {
         return md.getDigestLength();
     }
 
-
     public static byte[] generateSymmetricRandomKey() {
         KeyGenerator keyGen = null;
         try {
-            keyGen = KeyGenerator.getInstance(keyGenerationAlgorithm);
+            keyGen = KeyGenerator.getInstance(symmKeyGenAlg);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             Log.d(TAG, "Error in generating the symmetric random key: " + e.getMessage());
@@ -188,38 +200,71 @@ public class CryptoUtils {
     public static byte[] generateSecureIV () {
         Cipher cipher = null;
         try {
-            cipher = Cipher.getInstance(symmetricEncrAlgorithm, androidOpenSSLProviderName);
+            cipher = Cipher.getInstance(symmEncrAlg, androidOpenSSLProviderName);
         } catch ( NoSuchAlgorithmException | NoSuchPaddingException | NoSuchProviderException e) {
             e.printStackTrace();
             Log.d(TAG, "Error in generating initialization vector: " + e.getMessage());
             throw new SecurityException(e.getMessage());
         }
-        SecureRandom secureRandom = new SecureRandom();
         byte[] iv = new byte[cipher.getBlockSize()];
         secureRandom.nextBytes(iv);
         return iv;
     }
 
-    public static byte[] encryptSymmetric(byte[] encodedSymmKey, byte[] initializationVector, byte[] clearText) {
-        SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
+    public static byte[] encrDecrSymmetric(int cipherMode, byte[] encodedSymmKey, byte[] initializationVector, byte[] clearText) {
+        SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmEncrAlg);
         byte[] encryptedText = new byte[0];
         try {
-            Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm, androidOpenSSLProviderName);
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, new IvParameterSpec(initializationVector));
+            Cipher cipher = Cipher.getInstance(symmEncrAlg, androidOpenSSLProviderName);
+            cipher.init(cipherMode, skeySpec, new IvParameterSpec(initializationVector));
             encryptedText = cipher.doFinal(clearText);
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchProviderException e) {
             e.printStackTrace();
-            Log.d(TAG, "Error in symmetric encryption: " + e.getMessage());
+            if (cipherMode == Cipher.ENCRYPT_MODE)
+                Log.d(TAG, "Error in symmetric encryption: " + e.getMessage());
+            if (cipherMode == Cipher.DECRYPT_MODE)
+                Log.d(TAG, "Error in symmetric decryption: " + e.getMessage());
             throw new SecurityException(e.getMessage());
         }
         return encryptedText;
     }
 
-    public static byte[] decryptSymmetric(byte[] encodedSymmKey, byte[] initializationVector, byte[] encryptedText) throws Exception {
-        SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
-        Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm, androidOpenSSLProviderName);
-        cipher.init(Cipher.DECRYPT_MODE, skeySpec, new IvParameterSpec(initializationVector));
-        byte[] decrypted = cipher.doFinal(encryptedText);
-        return decrypted;
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public static GCMParameterSpec getGCMParameterSpec() {
+        byte[] nonce = new byte[GCM_NONCE_LENGTH];
+        secureRandom.nextBytes(nonce);
+        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, nonce);
+        return spec;
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public static byte[] processGCM (int mode, byte[] encodedSymmKey, AlgorithmParameterSpec spec, byte[] aad, byte[] originalText) {
+        SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, gcmEncrAlg);
+        Cipher cipher = null;
+        try {
+            cipher = Cipher.getInstance(gcmEncrAlg, bouncyCastleProviderName);
+        } catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Error in symmetric GCM encryption: " + e.getMessage());
+            throw new SecurityException(e.getMessage());
+        }
+        try {
+            cipher.init(mode, skeySpec, spec);
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Error in symmetric GCM encryption: " + e.getMessage());
+            throw new SecurityException(e.getMessage());
+        }
+        cipher.updateAAD(aad);
+        byte[] cipherText = new byte[0];
+        try {
+            cipherText = cipher.doFinal(originalText);
+        } catch (IllegalBlockSizeException | BadPaddingException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Error in symmetric GCM encryption: " + e.getMessage());
+            throw new SecurityException(e.getMessage());
+        }
+        return cipherText;
     }
 }
