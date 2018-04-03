@@ -14,23 +14,20 @@ public static byte[] generateSymmetricRandomKey() {
 	return secretKey.getEncoded();
 }
 
-public static byte[] encryptSymmetric(byte[] encodedSymmKey, byte[] clearText) {
+public static byte[] encrDecrSymmetric(int cipherMode, byte[] encodedSymmKey, byte[] originalText) {
 	SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
-	byte[] encryptedText = new byte[0];
+	byte[] processedText = new byte[0];
 	try {
 		Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);
-		cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
-		encryptedText = cipher.doFinal(clearText);
+		cipher.init(cipherMode, skeySpec);
+		processedText = cipher.doFinal(originalText);
 	} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
 		e.printStackTrace();
-		Log.d(TAG, "Error in symmetric encryption: " + e.getMessage());
+		if (cipherMode == Cipher.ENCRYPT_MODE)
+			Log.d(TAG, "Error in symmetric encryption: " + e.getMessage());
+		if (cipherMode == Cipher.DECRYPT_MODE)
+			Log.d(TAG, "Error in symmetric decryption: " + e.getMessage());
+		throw new SecurityException(e.getMessage());
 	} 
-	return encryptedText;
+	return processedText;
 }
-
-public static byte[] decryptSymmetric(byte[] encodedSymmKey, byte[] encryptedText) throws Exception {
-	SecretKeySpec skeySpec = new SecretKeySpec(encodedSymmKey, symmetricEncrAlgorithm);
-	Cipher cipher = Cipher.getInstance(symmetricEncrAlgorithm);
-	cipher.init(Cipher.DECRYPT_MODE, skeySpec);
-	byte[] decrypted = cipher.doFinal(encryptedText);
-return decrypted;

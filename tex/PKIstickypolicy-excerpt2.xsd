@@ -1,0 +1,1 @@
+<xs:element name="certificateSerialNumber" type="xs:unsignedLong" maxOccurs="1" minOccurs="1" />
