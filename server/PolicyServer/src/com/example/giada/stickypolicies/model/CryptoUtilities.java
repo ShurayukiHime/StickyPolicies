@@ -49,11 +49,12 @@ public class CryptoUtilities {
 
 	private final static String CNTrustAuthority = "TrustAuthority";
 	private static final String BC = org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME;
-	private static String encryptionAlgorithm = "RSA";
 	private static KeyPair taKeys;
 	private static X509Certificate taCertificate;
 	
-    private static String signatureAlgorithm = "MD5WithRSA";
+	private static String asymmEncrAlgorithm = "RSA/NONE/OAEPPADDING";
+	private static String asymmKeyGenAlg = "RSA";
+    private static String signatureAlgorithm = "SHA256WithRSA";
     private static String keyGenerationAlgorithm = "AES";
     private static String symmetricEncrAlgorithm = "AES/CBC/PKCS5PADDING";
     private static String digestAlgorithm = "SHA-256";
@@ -61,13 +62,32 @@ public class CryptoUtilities {
 	public static KeyPair getKeys() throws NoSuchAlgorithmException, NoSuchProviderException {
 		if (taKeys == null) {
 			Security.addProvider(new BouncyCastleProvider());
-			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(encryptionAlgorithm, BC);
+			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(asymmKeyGenAlg, BC);
 			keyPairGenerator.initialize(1024, new SecureRandom());
 			taKeys = keyPairGenerator.generateKeyPair();
 			return taKeys;
 		} else
 			return taKeys;
 	}
+	
+	public static String getServices() {
+		try {
+			getCertificate();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        Provider provider = Security.getProvider(BC);
+        StringBuilder sb = new StringBuilder();
+        Set<Provider.Service> services = provider.getServices();
+        String tmp = null;
+        for (Provider.Service s : services) {
+        	tmp = new String(s.getAlgorithm() + " " + s.toString());
+        	if (tmp.contains("RSA"))
+        		sb.append(tmp);
+        }
+        return sb.toString();
+    }
 
 	private static void generateSelfSignedX509Certificate() throws Exception {
 		if (taKeys == null)
@@ -78,11 +98,10 @@ public class CryptoUtilities {
 		Date validityBeginDate = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000); // yesterday
 		Date validityEndDate = new Date(System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000); 
 			//in one year
-		String signatureAlgorithm = "SHA256WithRSA"; 
 			//use appropriate signature alg based on your key algorithm
 		ContentSigner contentSigner = new JcaContentSignerBuilder(signatureAlgorithm).setProvider(BC)
 				.build(taKeys.getPrivate());
-
+		
 		JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
 				new X500Principal("CN=" + CNTrustAuthority), certSerialNumber, validityBeginDate, validityEndDate,
 				new X500Principal("CN=" + CNTrustAuthority), taKeys.getPublic());
@@ -168,7 +187,7 @@ public class CryptoUtilities {
 	public static byte[] encryptAsymmetric (PublicKey publicKey, byte[] plaintext) {
         byte[] encodedBytes = null;
         try {
-            Cipher c = Cipher.getInstance(encryptionAlgorithm);
+            Cipher c = Cipher.getInstance(asymmEncrAlgorithm, BC);
             c.init(Cipher.ENCRYPT_MODE, publicKey);
             encodedBytes = c.doFinal(plaintext);
         } catch (Exception e) {
@@ -178,9 +197,10 @@ public class CryptoUtilities {
     }
 
 	public static byte[] decryptAsymmetric (PrivateKey privateKey, byte[] encodedBytes) {
+		//Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         byte[] decodedBytes = null;
         try {
-            Cipher c = Cipher.getInstance(encryptionAlgorithm);
+            Cipher c = Cipher.getInstance(asymmEncrAlgorithm, BC);
             c.init(Cipher.DECRYPT_MODE, privateKey);
             decodedBytes = c.doFinal(encodedBytes);
         } catch (Exception e) {

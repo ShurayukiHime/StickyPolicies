@@ -39,6 +39,8 @@ public class CryptoTest {
         } finally {
             br.close();
         }
+        
+        System.out.println(CryptoUtilities.getServices());
 
         byte[] policyDigest = new byte[0];
         byte[] policyDigest2 = new byte[0];

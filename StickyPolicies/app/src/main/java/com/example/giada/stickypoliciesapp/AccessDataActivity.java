@@ -121,7 +121,7 @@ public class AccessDataActivity extends AppCompatActivity {
             byte[] forgedTxt = "I didn't cheat during last exam".getBytes(Charset.forName("UTF-8"));
             byte[] forgedEncrPii = CryptoUtils.encrDecrSymmetric(Cipher.ENCRYPT_MODE, forgedKey, initVec, forgedTxt);
 
-            byte[] decodedPii = CryptoUtils.encrDecrSymmetric(Cipher.DECRYPT_MODE, forgedKey, initVec, encryptedPii);
+            byte[] decodedPii = CryptoUtils.encrDecrSymmetric(Cipher.DECRYPT_MODE, encodedSymmKey, initVec, encryptedPii);
             return decodedPii;
         } catch (Exception e) {
             e.printStackTrace();

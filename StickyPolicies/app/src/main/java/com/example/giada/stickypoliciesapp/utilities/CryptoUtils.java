@@ -22,13 +22,16 @@ import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Date;
+import java.util.Set;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -55,8 +58,8 @@ public class CryptoUtils {
     private static final String androidOpenSSLProviderName = "AndroidOpenSSL";
 
     private static String asymmKeyGenAlg = "RSA";
-    private static String asymmEncrAlg = "RSA/ECB/PKCS1Padding";
-    private static String signatureAlgorithm = "MD5WithRSA";
+    private static String asymmEncrAlg = "RSA/ECB/OAEPPadding";
+    private static String signatureAlgorithm = "SHA256WithRSA";
 
     private static int AES_KEY_SIZE = 256;
     private static String symmKeyGenAlg = "AES";
@@ -81,6 +84,16 @@ public class CryptoUtils {
         }
     }
 
+    public static String getServices() {
+        Provider provider = Security.getProvider(bouncyCastleProviderName);
+        StringBuilder sb = new StringBuilder();
+        Set<Provider.Service> services = provider.getServices();
+        for (Provider.Service s : services) {
+            sb.append(s.getAlgorithm() + " " + s.toString() + "\n");
+        }
+        return sb.toString();
+    }
+
     private static void generateSelfSignedX509Certificate() throws Exception {
         if (keyPair == null)
             generateKeys();
@@ -89,7 +102,6 @@ public class CryptoUtils {
         BigInteger certSerialNumber = new BigInteger(Long.toString(System.currentTimeMillis()));
         Date validityBeginDate = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000); // yesterday
         Date validityEndDate = new Date(System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000);  // in 1 year
-        String signatureAlgorithm = "SHA256WithRSA"; // <-- Use appropriate signature algorithm based on your keyPair algorithm.
 
         ContentSigner contentSigner = new JcaContentSignerBuilder(signatureAlgorithm).setProvider(bouncyCastleProviderName).build(keyPair.getPrivate());
 
