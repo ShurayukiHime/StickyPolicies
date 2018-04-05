@@ -1,3 +1,4 @@
+byte[] pii;
 byte[] encrPiiAndIV = new byte[0];
 byte[] keyAndHashEncrypted = new byte[0];
 byte[] signedEncrKeyAndHash = new byte[0];
@@ -7,11 +8,11 @@ try {
 	byte[] encodedSymmetricKey = CryptoUtils.generateSymmetricRandomKey();
 	byte[] initializationVec = CryptoUtils.generateSecureIV();
 	// 3) encrypt PII
-	byte[] encryptedPii = CryptoUtils.encryptSymmetric(encodedSymmetricKey, initializationVec, pii);
+	byte[] encryptedPii = CryptoUtils.encrDecrSymmetric(Cipher.ENCRYPT_MODE, encodedSymmetricKey, initializationVec, pii);
 	// 4) hash policy
 	byte[] policyDigest = CryptoUtils.calculateDigest(policy.getBytes(Charset.forName("UTF-8")));
 	// 5) append policy and  digest, encrypt with PubTa
-	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream( );
+	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 	byteArrayOutputStream.write(encodedSymmetricKey);
 	byteArrayOutputStream.write(policyDigest);
 	keyAndHashEncrypted = CryptoUtils.encryptAsymmetric(taPublicKey, byteArrayOutputStream.toByteArray());

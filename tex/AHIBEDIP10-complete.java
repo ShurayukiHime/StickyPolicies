@@ -21,16 +21,11 @@ import static org.junit.Assert.*;
  * @author Angelo De Caro (jpbclib@gmail.com)
  */
 public class AHIBEDIP10 {
-
-
-    public AHIBEDIP10() {
-    }
-
+    public AHIBEDIP10() { }
 
     public AsymmetricCipherKeyPair setup(int bitLength, int length) {
         AHIBEDIP10KeyPairGenerator setup = new AHIBEDIP10KeyPairGenerator();
         setup.init(new AHIBEDIP10KeyPairGenerationParameters(bitLength, length));
-
         return setup.generateKeyPair();
     }
 
@@ -45,7 +40,6 @@ public class AHIBEDIP10 {
         return elements;
     }
 
-
     public CipherParameters keyGen(AsymmetricCipherKeyPair masterKey, Element... ids) {
         AHIBEDIP10SecretKeyGenerator generator = new AHIBEDIP10SecretKeyGenerator();
         generator.init(new AHIBEDIP10SecretKeyGenerationParameters(
@@ -53,7 +47,6 @@ public class AHIBEDIP10 {
                 (AHIBEDIP10PublicKeyParameters) masterKey.getPublic(),
                 ids
         ));
-
         return generator.generateKey();
     }
 
@@ -64,7 +57,6 @@ public class AHIBEDIP10 {
                 (AHIBEDIP10SecretKeyParameters) secretKey,
                 id
         ));
-
         return generator.generateKey();
     }
 
@@ -104,10 +96,8 @@ public class AHIBEDIP10 {
             e.printStackTrace();
             fail(e.getMessage());
         }
-
         return null;
     }
-
 
     public static void main(String[] args) {
         AHIBEDIP10 engine = new AHIBEDIP10();
@@ -149,6 +139,4 @@ public class AHIBEDIP10 {
         assertEquals(false, Arrays.equals(ciphertext012[0], engine.decaps(engine.delegate(keyPair, sk01, ids[1]), ciphertext012[1])));
         assertEquals(false, Arrays.equals(ciphertext012[0], engine.decaps(engine.delegate(keyPair, engine.delegate(keyPair, sk0, ids[2]), ids[1]), ciphertext012[1])));
     }
-
-
 }
