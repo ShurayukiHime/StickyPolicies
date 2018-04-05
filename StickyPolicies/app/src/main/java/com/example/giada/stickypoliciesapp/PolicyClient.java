@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.example.giada.stickypoliciesapp.utilities.CryptoUtils;
 import com.example.giada.stickypoliciesapp.utilities.NetworkUtils;
+import com.example.giada.stickypoliciesapp.utilities.ParsingUtils;
 import com.google.gson.Gson;
 
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
@@ -42,6 +43,7 @@ public class PolicyClient extends AppCompatActivity {
     private Button mAccessDataButton;
 
     private final static String TAG = PolicyClient.class.getSimpleName();
+    private final static String filename = "encrData.txt";
 
     final static String OBTAIN_CERT_PATH = "certificates";
     final static String DATA_ACCESS_PATH = "access";
@@ -84,6 +86,9 @@ public class PolicyClient extends AppCompatActivity {
         }
         if (!extrasBundle.isEmpty() && extrasBundle.containsKey("policy")){
             policy = (String) extrasBundle.get("policy");
+            if (!(policy.startsWith("<"))) {
+                policy = ParsingUtils.readInternalStorage(getApplicationContext(), policy);
+            }
         }
     }
 
@@ -94,14 +99,21 @@ public class PolicyClient extends AppCompatActivity {
     }
 
     private void accessEncryptedData() {
+        Gson gson = new Gson();
+        Log.d(TAG, "Simulate network consumption...");
+        URL serverURL = NetworkUtils.buildUrl(DATA_ACCESS_PATH, "", "");
+        new SendEncryptedDataTask(gson.toJson(bobsData, EncryptedData.class)).execute(serverURL);
+        Log.d(TAG, gson.toJson(bobsData, EncryptedData.class));
+
         Context context = PolicyClient.this;
         Class destinationActivity = AccessDataActivity.class;
         Intent accessDataIntent = new Intent(context, destinationActivity);
         Bundle bundle = new Bundle();
-        Gson gson = new Gson();
         String tmp = gson.toJson(bobsData, EncryptedData.class);
-        Log.d(TAG, "String length: " + tmp.length());
-        bundle.putString("string_gson_data", gson.toJson(bobsData, EncryptedData.class));
+
+        tmp = ParsingUtils.writeInternalStorage(getApplicationContext(), filename, tmp);
+
+        bundle.putString("string_gson_data", tmp);
         accessDataIntent.putExtras(bundle);
         Log.d(TAG, "Starting access activity...");
         startActivity(accessDataIntent);

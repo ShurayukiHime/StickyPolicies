@@ -11,6 +11,7 @@ import java.security.NoSuchProviderException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
+import javax.crypto.Cipher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -82,7 +83,6 @@ public class DataAccessServlet extends HttpServlet {
         String policy = data.getStickyPolicy();
         byte[] keyAndHashEncrypted = data.getKeyAndHashEncrypted();
         byte[] signedEncrKeyAndHash = data.getSignedEncrkeyAndHash();
-        
 		try {
 			XMLParserSAX parser = new XMLParserSAX(policy, false);
 				//throws exception
@@ -98,7 +98,7 @@ public class DataAccessServlet extends HttpServlet {
 				// compute hash from policy
 				byte[] computedPolicyDigest = CryptoUtilities.calculateDigest(policy.getBytes(Charset.forName("UTF-8")));
 				// decrypt signedKeyAndHash with own private key
-				byte[] computedSignedKeyAndHash = CryptoUtilities.decryptAsymmetric(
+				byte[] computedSignedKeyAndHash = CryptoUtilities.encrDecrAsymmetric(Cipher.DECRYPT_MODE,
 						CryptoUtilities.getKeys().getPrivate(),keyAndHashEncrypted);
 				int digestLength = CryptoUtilities.getDigestSize();
 				// separate hash from key

@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.security.DigestException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
@@ -184,29 +185,16 @@ public class CryptoUtilities {
         }
     }
 
-	public static byte[] encryptAsymmetric (PublicKey publicKey, byte[] plaintext) {
-        byte[] encodedBytes = null;
+	public static byte[] encrDecrAsymmetric (int cipherMode, Key key, byte[] originalText) {
+        byte[] processedText = null;
         try {
             Cipher c = Cipher.getInstance(asymmEncrAlgorithm, BC);
-            c.init(Cipher.ENCRYPT_MODE, publicKey);
-            encodedBytes = c.doFinal(plaintext);
+            c.init(cipherMode, key);
+            processedText = c.doFinal(originalText);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return encodedBytes;
-    }
-
-	public static byte[] decryptAsymmetric (PrivateKey privateKey, byte[] encodedBytes) {
-		//Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-        byte[] decodedBytes = null;
-        try {
-            Cipher c = Cipher.getInstance(asymmEncrAlgorithm, BC);
-            c.init(Cipher.DECRYPT_MODE, privateKey);
-            decodedBytes = c.doFinal(encodedBytes);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return decodedBytes;
+        return processedText;
     }
 
 	public static byte[] generateSymmetricRandomKey() {

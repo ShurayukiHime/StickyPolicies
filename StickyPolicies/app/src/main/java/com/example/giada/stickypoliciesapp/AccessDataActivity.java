@@ -56,26 +56,28 @@ public class AccessDataActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d(TAG, "Stuck in onStart!");
         Bundle extrasBundle = getIntent().getExtras();
         Gson gson = new Gson();
+        String tmp = null;
         if (!extrasBundle.isEmpty() && extrasBundle.containsKey("string_gson_data")) {
-            bobsData = gson.fromJson((String) extrasBundle.get("string_gson_data"), EncryptedData.class);
-            pii = accessEncryptedData();
-            if (pii != null) {
-                String policy = bobsData.getStickyPolicy();
-                String dataType = ParsingUtils.getTagContent(policy, ParsingUtils.DATA_TYPE_TAG);
-                switch (dataType) {
-                    case ParsingUtils.DATA_TYPE_PICTURE:
-                        showPicture(pii);
-                        break;
-                    case ParsingUtils.DATA_TYPE_TEXT:
-                        showText(pii);
-                        break;
-                }
+            tmp = (String) extrasBundle.get("string_gson_data");
+            tmp = ParsingUtils.readInternalStorage(getApplicationContext(), tmp);
+            bobsData = gson.fromJson(tmp, EncryptedData.class);
+        }
+        pii = accessEncryptedData();
+        if (pii != null) {
+            String policy = bobsData.getStickyPolicy();
+            String dataType = ParsingUtils.getTagContent(policy, ParsingUtils.DATA_TYPE_TAG);
+            switch (dataType) {
+                case ParsingUtils.DATA_TYPE_PICTURE:
+                    showPicture(pii);
+                    break;
+                case ParsingUtils.DATA_TYPE_TEXT:
+                    showText(pii);
+                    break;
             }
         }
-        if (bobsData == null) {
+        if (tmp == null) {
             mUrlDisplayTextView.setText("No data received, or data received was corrupted. Please try again.");
             Log.d(TAG, "Received data is null.");
         }
@@ -108,19 +110,6 @@ public class AccessDataActivity extends AppCompatActivity {
             byte[] encrPiiAndIV = bobsData.getEncrPiiAndIV();
             byte[] encryptedPii = Arrays.copyOfRange(encrPiiAndIV, 0, (encrPiiAndIV.length - cipher_block_length));
             byte[] initVec = Arrays.copyOfRange(encrPiiAndIV, (encrPiiAndIV.length - cipher_block_length), encrPiiAndIV.length);
-            byte[] tmpTamperedPii = Arrays.copyOfRange(encryptedPii, 0, (encryptedPii.length - cipher_block_length));
-            byte[] tamperedPii = new byte[tmpTamperedPii.length + cipher_block_length];
-            System.arraycopy(tmpTamperedPii, 0, tamperedPii, 0, tmpTamperedPii.length);
-            Log.d(TAG, "tamperedPii length: " + tamperedPii.length + " contents: " + Arrays.toString(tamperedPii));
-            byte[] zero = new byte[cipher_block_length];
-            Arrays.fill(zero, (byte) 0);
-            System.arraycopy(zero, 0, tamperedPii, tmpTamperedPii.length, zero.length);
-            Log.d(TAG, "tamperedPii length: " + tamperedPii.length + " contents: " + Arrays.toString(tamperedPii));
-
-            byte[] forgedKey = CryptoUtils.generateSymmetricRandomKey();
-            byte[] forgedTxt = "I didn't cheat during last exam".getBytes(Charset.forName("UTF-8"));
-            byte[] forgedEncrPii = CryptoUtils.encrDecrSymmetric(Cipher.ENCRYPT_MODE, forgedKey, initVec, forgedTxt);
-
             byte[] decodedPii = CryptoUtils.encrDecrSymmetric(Cipher.DECRYPT_MODE, encodedSymmKey, initVec, encryptedPii);
             return decodedPii;
         } catch (Exception e) {

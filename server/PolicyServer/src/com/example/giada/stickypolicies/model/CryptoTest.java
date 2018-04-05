@@ -11,6 +11,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.Arrays;
 
+import javax.crypto.Cipher;
+
 public class CryptoTest {
 
 	private static int cipher_block_length = 16;
@@ -67,8 +69,8 @@ public class CryptoTest {
         int sizeBefFirstEncy = byteArrayOutputStream.toByteArray().length;
         byte[] keyAndHashEncrypted = null;
         try {
-        	keyAndHashEncrypted = CryptoUtilities.encryptAsymmetric(CryptoUtilities.getKeys().getPublic(),
-					byteArrayOutputStream.toByteArray());
+        	keyAndHashEncrypted = CryptoUtilities.encrDecrAsymmetric(Cipher.ENCRYPT_MODE,
+					CryptoUtilities.getKeys().getPublic(), byteArrayOutputStream.toByteArray());
 		} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -78,7 +80,7 @@ public class CryptoTest {
         System.out.println("Now trying to decrypt, split and compare the digests");
         byte[] computedSignedKeyAndHash = null;
 		try {
-			computedSignedKeyAndHash = CryptoUtilities.decryptAsymmetric(
+			computedSignedKeyAndHash = CryptoUtilities.encrDecrAsymmetric(Cipher.DECRYPT_MODE,
 					CryptoUtilities.getKeys().getPrivate(),keyAndHashEncrypted);
 		} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
 			// TODO Auto-generated catch block
@@ -102,15 +104,15 @@ public class CryptoTest {
 		int sizeBefSecondEncy = secondAttempt.length;
 		
 		try {
-        	keyAndHashEncrypted = CryptoUtilities.encryptAsymmetric(CryptoUtilities.getKeys().getPublic(),
-        			secondAttempt);
+        	keyAndHashEncrypted = CryptoUtilities.encrDecrAsymmetric(Cipher.ENCRYPT_MODE,
+        			CryptoUtilities.getKeys().getPublic(), secondAttempt);
 		} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		int sizeSecondEncr = keyAndHashEncrypted.length;
 		try {
-			computedSignedKeyAndHash = CryptoUtilities.decryptAsymmetric(
+			computedSignedKeyAndHash = CryptoUtilities.encrDecrAsymmetric(Cipher.DECRYPT_MODE, 
 					CryptoUtilities.getKeys().getPrivate(),keyAndHashEncrypted);
 		} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
 			// TODO Auto-generated catch block

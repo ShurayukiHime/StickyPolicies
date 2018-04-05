@@ -33,6 +33,7 @@ public class ShareDataActivity extends AppCompatActivity {
     private TextView mTextToShare;
     private ImageView mImageView;
     private static final String TAG = ShareDataActivity.class.getSimpleName();
+    private static final String filename = "myPolicy.xml";
     private static final int READ_REQUEST_CODE = 42;
 
     @Override
@@ -91,6 +92,10 @@ public class ShareDataActivity extends AppCompatActivity {
                         bundle.putString("string_pii", mTextToShare.getText() + "");
                         policy = ParsingUtils.correctPolicyFile(policy, ParsingUtils.DATA_TYPE_TAG, ParsingUtils.DATA_TYPE_TEXT);
                     }
+                }
+                if (policy.length() > 500) { //made up
+                    String pathToPolicy = ParsingUtils.writeInternalStorage(getApplicationContext(), filename, policy);
+                    policy = pathToPolicy;
                 }
                 bundle.putString("policy", policy);
                 sharePii.putExtras(bundle);
