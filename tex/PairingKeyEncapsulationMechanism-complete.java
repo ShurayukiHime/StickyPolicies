@@ -8,10 +8,7 @@ import org.bouncycastle.crypto.InvalidCipherTextException;
  * @author Angelo De Caro (jpbclib@gmail.com)
  */
 public abstract class PairingKeyEncapsulationMechanism extends PairingAsymmetricBlockCipher implements KeyEncapsulationMechanism {
-
     private static byte[] EMPTY = new byte[0];
-
-
     protected int keyBytes = 0;
 
     public int getKeyBlockSize() {
@@ -32,7 +29,6 @@ public abstract class PairingKeyEncapsulationMechanism extends PairingAsymmetric
         return keyBytes;
     }
 
-
     public byte[] processBlock(byte[] in) throws InvalidCipherTextException {
         return processBlock(in, in.length, 0);
     }
@@ -40,5 +36,4 @@ public abstract class PairingKeyEncapsulationMechanism extends PairingAsymmetric
     public byte[] process() throws InvalidCipherTextException {
         return processBlock(EMPTY, 0, 0);
     }
-
 }

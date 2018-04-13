@@ -5,6 +5,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{url}
+\usepackage[hidelinks]{hyperref}
 \usepackage{setspace}
 
 \usepackage{fancyhdr}
@@ -15,6 +16,7 @@
 \definecolor{mygreen}{rgb}{0,0.6,0}
 \definecolor{mygray}{rgb}{0.5,0.5,0.5}
 \definecolor{mymauve}{rgb}{0.58,0,0.82}
+\definecolor{pred}{rgb}{0.9,0,0}
 \definecolor{light-gray}{gray}{0.95}
 \usepackage{listings}
 \lstset{ 
@@ -31,8 +33,10 @@
 	commentstyle=\color{mygreen},    % comment style
 	keywordstyle=\color{blue},       % keyword style
 	numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+	stringstyle=\color{pred},
 	rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
 	stringstyle=\color{mymauve},     % string literal style
+	tabsize=4		%modify tab space, default too wide
 }
 
 
@@ -78,6 +82,7 @@
 	\include{capitolo1}
 	\include{capitolo2}
 	\include{capitolo3}
+	\include{capitolo4}
 
 	\clearpage{\pagestyle{empty}\cleardoublepage}
 	\addcontentsline{toc}{chapter}{Bibliography}
@@ -98,5 +103,7 @@
 	
 	\include{appendixA}
 	\include{appendixB}
+	\include{appendixC}
+	\include{appendixD}
 
 \end{document}

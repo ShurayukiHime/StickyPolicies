@@ -11,7 +11,6 @@ import org.bouncycastle.crypto.params.ParametersWithRandom;
  * @author Angelo De Caro (jpbclib@gmail.com)
  */
 public abstract class PairingAsymmetricBlockCipher implements AsymmetricBlockCipher {
-    
     protected CipherParameters key;
     protected boolean forEncryption;
 
@@ -19,7 +18,6 @@ public abstract class PairingAsymmetricBlockCipher implements AsymmetricBlockCip
     protected int outBytes = 0;
 
     protected Pairing pairing;
-
 
     /**
      * Return the maximum size for an input block to this engine.
@@ -63,7 +61,6 @@ public abstract class PairingAsymmetricBlockCipher implements AsymmetricBlockCip
         }
 
         this.forEncryption = forEncryption;
-
         initialize();
     }
 
@@ -89,9 +86,6 @@ public abstract class PairingAsymmetricBlockCipher implements AsymmetricBlockCip
         return process(in, inOff, inLen);
     }
 
-
     public abstract void initialize();
-
     public abstract byte[] process(byte[] in, int inOff, int inLen) throws InvalidCipherTextException;
-
 }
