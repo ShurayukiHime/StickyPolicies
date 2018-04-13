@@ -16,16 +16,16 @@ The role and implementation of the trusted entity changes according to the chose
 We will now examine the main solutions available in literature, and consider their main advantages and disadvantages. It is worth saying beforehand that every solution cannot overlook the trust in the chosen third party: mainly, because once the data is decrypted it can be shared by the third party without any concern; secondly, due to the need of proving the remote hardware machines to be reliable (i.e. it always behaves the way it should, for the intended purpose). This latter issue has been dealt with through the use of Trusted Platform Modules \cite{standard2009trusted}.
 
 \section{Hybrid Cryptosystem}
-In this scenario, we use both asymmetric and symmetric cryptography to achieve the required \textit{stickyness} of the policies. In a possible use-case, the service provider receives data, encrypted with a symmetric one-time-use key \textit{K}, together with the policy and \textit{K}, both encrypted with the public key of the \textit{Trust Authority} and signed by the user. The service provider will interact with the Trust Authority to prove its reliability, eventually receiving the symmetric key \textit{K}.
+In this scenario, we use both asymmetric and symmetric cryptography to achieve the required \textit{stickyness} of the policies. In a possible use-case, the service provider receives data, encrypted with a symmetric one-time-use key \textit{K}, together with the policy and \textit{K}, both encrypted with the public key of the \textit{Trust Authority} and signed by the user. The service provider will interact with the Trust Authority to prove its reliability, possibly receiving the symmetric key \textit{K}.
 
-The \textit{Trusted Authority} or \textit{Policy Enforcement Point} always mediates the data exchange. It is a semi-trusted third party which checks the compliance of the service provider with the specified policies before releasing the symmetric keu \textit{K}. A formal protocol for message exchange is suggested in \cite{pearson2011sticky}: 
+The \textit{Trusted Authority} or \textit{Policy Enforcement Point} always mediates the data exchange. It is a semi-trusted third party which checks the compliance of the service provider with the specified policies before releasing the symmetric key \textit{K}. A formal protocol for message exchange is suggested in \cite{pearson2011sticky}: 
 
 \begin{sloppypar}
 \centering
 \texttt{Policy, Enc(PubTA, K||h(Policy)), Sig(PrivUser, Enc(PubTA, K||h(Policy))), Enc(K, PII)}.
 \end{sloppypar}
 
-This ensures that the policy always sticks to its data, and its integrity can be verified through a secure hashing function. Moreover, the combined usage of TA's public key and the data owner's private key ensure both confidentiality and authenticity. 
+This ensures that the policy always sticks to its data, and its integrity can be verified through a secure hashing function. Moreover, the combined usage of TA's public key and the data owner's private key ensures both confidentiality and authenticity. 
 
 This implementation relies heavily on the Public Key Infrastructure, and requires procedures for management and verification of X.509 certificates. For what concerns the PEP, it must be always reachable from the internet and, together with the Certification Authority, may be a target for attacks: first, it constitutes a \textit{single point of failure}; additionally, if compromised, it could infect the data owner (for example through phishing attacks) or act as a man in the middle, decrypting \texttt{PII}.
 
@@ -68,7 +68,7 @@ The Proxy Re-Encryption scheme shows some advantages with respect to the other s
 Nearly each of the possibilities considered in chapter \ref{chapter2} has a dedicated implementation. For Cyphertext-Policy Attribute-Based Encryption there is the \texttt{cpabe} toolkit \cite{bethencourt2011library}, available in the C language. This library provides an encryption scheme such that each private key is associated with a set of attributes rather than with the identity of the data owner. Attributes can be provided as strings from standard input or from a file; moreover, it is possible to combine more than one attribute or rule through predefined operators as 'and', 'or', '>', '<'.
 
 \subsection{Java Pairing Based Cryptography Library for IBE}
-For Identity-Based Encryption we can rely on the Java Pairing Based Cryptography Library \cite{ISCC:DecIov11}. Private keys are generated from identities alone as well as combined with attributes describing the authorized audience, and it is possible both do encrypt and sign data. Both \cite{ISCC:DecIov11} and \cite{bethencourt2011library} depend on the Pairing-Based Cryptography Library \cite{PBC2007Lynn}, developed in the C language.
+For Identity-Based Encryption we can rely on the Java Pairing Based Cryptography Library \cite{ISCC:DecIov11}. Private keys are generated from identities alone as well as combined with attributes describing the authorized audience, and it is possible both to encrypt and sign data. Both \cite{ISCC:DecIov11} and \cite{bethencourt2011library} depend on the Pairing-Based Cryptography Library \cite{PBC2007Lynn}, developed in the C language.
 
 \lstinputlisting[caption={Java mock class for IBE implementation},label={list:AHIBEDIP10},language=java]{AHIBEDIP10.java}
 
