@@ -5,7 +5,7 @@ It is powered by **Apache Tomcat**.
 
 It includes a parser which can interpret Sticky Policies following the predefined XSD grammar.
 
-The idea is to answer clients following Mont2003towards specification.
+The idea is to answer clients following [this](https://documents.epfl.ch/users/a/ay/ayday/www/mini_project/Sticky%20Policies.pdf) specification.
 
 ## Structure of a Sticky Policy
 Following the specification, a Sticky Policy always refer to a single encrypted file. It contains:
